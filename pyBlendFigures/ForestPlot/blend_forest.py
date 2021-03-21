@@ -15,15 +15,15 @@ class ForestLine:
         self._round = rounding
         self._colour = object_colour
 
-    def make_line(self, height_total, height_iter, scale=0.1):
+    def make_line(self, height_total, height_iterator, scale=0.1):
         """
         This will make the forest line via the standardised lower and upper bounds.
 
         :param height_total: Total current height, starts at 0 and is iterated each time a row is added
         :type height_total: float
 
-        :param height_iter: The iterable amount specified by the user, defaults to 0.5
-        :type height_iter: float
+        :param height_iterator: The iterable amount specified by the user, defaults to 0.5
+        :type height_iterator: float
 
         :param scale: How much to scale on y, defaults to 0.2
         :type scale: float
@@ -41,8 +41,8 @@ class ForestLine:
 
         # 4 verts made with XYZ coords
         verts = [(float(self.ub_plot), height_total, 0.0),
-                 (float(self.ub_plot), height_total - height_iter, 0.0),
-                 (float(self.lb_plot), height_total - height_iter, 0.0),
+                 (float(self.ub_plot), height_total - height_iterator, 0.0),
+                 (float(self.lb_plot), height_total - height_iterator, 0.0),
                  (float(self.lb_plot), height_total, 0.0)]
         edges = []
         faces = [[0, 1, 2, 3]]
@@ -102,7 +102,7 @@ def isolate_rows(path_to_csv):
         return [r for i, r in enumerate(csv.reader(csv_file)) if i > 0]
 
 
-def make_text(object_name, bound, y_mean_val, text, height_iter, object_colour):
+def make_text(object_name, bound, y_mean_val, text, height_iterator, object_colour, align="LEFT"):
     """
     Creates a text object starting at x 'bound' and at y 'y_mean_val' displaying 'text'. It is scaled to be equal to the
     objects via the 'height_iter'
@@ -119,11 +119,13 @@ def make_text(object_name, bound, y_mean_val, text, height_iter, object_colour):
     :param text: Text to display
     :type text: str
 
-    :param height_iter: Scaling about to make text relative to all other components
-    :type height_iter: float
+    :param height_iterator: Scaling about to make text relative to all other components
+    :type height_iterator: float
 
     :param object_colour: RGBA colour of the object
-    :type object_colour: (int, int, int, int)
+    :type object_colour: (int, int, int, int) | (float, float, float, float)
+
+    :param align:
 
     :return: Nothing, make the text object then stop
     """
@@ -136,9 +138,10 @@ def make_text(object_name, bound, y_mean_val, text, height_iter, object_colour):
     obj.data.body = text
     create_emission_node(obj, object_colour)
     bpy.context.object.name = f"{object_name}_var_name"
+    bpy.context.object.data.align_x = align
 
     # Scale it relative to all other elements
-    bpy.ops.transform.resize(value=(height_iter, height_iter, height_iter))
+    bpy.ops.transform.resize(value=(height_iterator, height_iterator, height_iterator))
     bpy.ops.object.select_all(action='DESELECT')
 
 
@@ -180,7 +183,7 @@ def create_emission_node(obj, colour, strength=1.0):
     :param obj: The current blender object
 
     :param colour: RGBA colour
-    :type colour: (int, int, int, int)
+    :type colour: (int, int, int, int) | (float, float, float, float)
 
     :param strength: Intensity of the emission node
     :type strength: float
@@ -226,7 +229,7 @@ def make_axis(colour, height_end, x_min, x_max, width=0.01):
     Creates the horizontal and vertical axis
 
     :param colour: Axis colour
-    :type colour: (int, int, int, int)
+    :type colour: (int, int, int, int) | (float, float, float, float)
 
     :param height_end: The end value of the height iterator
     :type height_end: float
@@ -268,6 +271,7 @@ def make_axis(colour, height_end, x_min, x_max, width=0.01):
     edges = []
     faces = [[0, 1, 2, 3], [4, 5, 6, 7]]
     mesh.from_pydata(verts, edges, faces)
+    bpy.ops.object.select_all(action='DESELECT')
 
 
 if __name__ == '__main__':
@@ -276,7 +280,7 @@ if __name__ == '__main__':
     csv_rows = isolate_rows(csv_path)
 
     height_max = 0
-    height_iterator = 0.04  # Expose
+    height_iter = 0.04  # Expose
 
     coefficient_radius = 0.007  # Expose
     var_bound = -0.8  # Defaults to 1, Expose
@@ -285,38 +289,46 @@ if __name__ == '__main__':
     text_colour = (0, 0, 0, 0)  # Defaults to black, Expose
     axis_width = 0.005  # Defaults to this?, Expose
     y_scale = 0.1  # Defaults to 0.1, Expose
-    axis_colour = (20, 20, 20, 0)  # Defaults to (20, 20, 20, 0), Expose
+    axis_colour = (0.02, 0.02, 0.02, 0)  # Defaults to (0.02, 0.02, 0.02, 0), Expose
 
     x_res = 2160  # Defaults to 1080, Expose
     y_res = 2160  # Defaults to 1080, Expose
 
     # For each row represents a line we wish to plot
     variable_names = []
+    extent_values = []
     bound_values = []
     for row in csv_rows:
 
         # Create an object to construct the necessary components
         forest_obj = ForestLine(row, coefficient_radius, rounder, text_colour)
         variable_names.append(forest_obj.var_name)
-        bound_values = bound_values + [float(forest_obj.lb_plot), float(forest_obj.ub_plot)]
+        extent_values = extent_values + [float(forest_obj.lb_plot), float(forest_obj.ub_plot)]
+        bound_values = bound_values + [float(forest_obj.lb), float(forest_obj.ub)]
 
         # Create the line
-        current_name = forest_obj.make_line(height_max, height_iterator, y_scale)
+        current_name = forest_obj.make_line(height_max, height_iter, y_scale)
         y_mean = forest_obj.make_coefficient(current_name)
 
         # Set the variable name
-        make_text(forest_obj.var_name, var_bound, y_mean, forest_obj.var_name, height_iterator, text_colour)
+        make_text(forest_obj.var_name, var_bound, y_mean, forest_obj.var_name, height_iter, text_colour)
 
         # Create the numeric string
         numeric = f"{set_values(forest_obj.coef, rounder)} ({set_values(forest_obj.ub, rounder)}; " \
                   f"{set_values(forest_obj.lb, rounder)})"
-        make_text(forest_obj.var_name, numeric_bound, y_mean, numeric, height_iterator, text_colour)
+        make_text(forest_obj.var_name, numeric_bound, y_mean, numeric, height_iter, text_colour)
 
-        height_max -= height_iterator
+        height_max -= height_iter
 
     # Make y axis from the min and max values of the standardised rows
-    make_axis(axis_colour, height_max, min(bound_values), max(bound_values), axis_width)
-    height_max -= height_iterator
+    make_axis(axis_colour, height_max, min(extent_values), max(extent_values), axis_width)
+    height_max -= height_iter
+
+    # Add values based on a range between the min and max equally divided
+    make_text("Min_Bound", min(extent_values), height_max, set_values(min(bound_values), 2), height_iter, text_colour)
+    make_text("Max_Bound", max(extent_values), height_max, str(round(max(bound_values), 2)), height_iter, text_colour,
+              "RIGHT")
+    make_text("Mid_Point", 0, height_max, str(0.0), height_iter, text_colour, "CENTER")
 
     # Set the output resolution
     bpy.context.scene.render.resolution_x = x_res
