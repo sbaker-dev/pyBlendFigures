@@ -191,3 +191,9 @@ if __name__ == '__main__':
     # todo set dimensions
     # todo create a base forest blend
     print("")
+
+
+    #bpy.context.scene.render.filepath = r'C:\Users\Samuel\PycharmProjects\pyBlendFigures\Tests\TTT.png'
+    #bpy.context.scene.eevee.use_gtao = True
+    #bpy.context.scene.render.film_transparent = True
+    #bpy.ops.render.render(write_still=True)
