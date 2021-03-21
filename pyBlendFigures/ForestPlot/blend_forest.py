@@ -235,6 +235,9 @@ if __name__ == '__main__':
     rounder = 3  # Defaults to 3, Expose
     text_colour = (0, 0, 0, 0)
 
+    x_res = 2160
+    y_res = 2160
+
     # For each row represents a line we wish to plot
     variable_names = []
     for row in csv_rows:
@@ -257,14 +260,17 @@ if __name__ == '__main__':
 
         height_max -= height_iterator
 
+    # TODO
+    # Make y axis from the min and max values of the standardised rows
+    # make dividing line
+    # make title
 
+    # Set the output resolution
+    bpy.context.scene.render.resolution_x = x_res
+    bpy.context.scene.render.resolution_y = y_res
 
-    # todo set dimensions
-    # todo create a base forest blend
-    print("")
-
-
-    #bpy.context.scene.render.filepath = r'C:\Users\Samuel\PycharmProjects\pyBlendFigures\Tests\TTT.png'
-    #bpy.context.scene.eevee.use_gtao = True
-    #bpy.context.scene.render.film_transparent = True
-    #bpy.ops.render.render(write_still=True)
+    # Render the scene
+    bpy.context.scene.render.filepath = r'C:\Users\Samuel\PycharmProjects\pyBlendFigures\Tests\TTT.png'
+    bpy.context.scene.eevee.use_gtao = True
+    bpy.context.scene.render.film_transparent = True
+    bpy.ops.render.render(write_still=True)
