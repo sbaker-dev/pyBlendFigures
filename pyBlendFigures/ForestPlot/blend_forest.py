@@ -15,7 +15,7 @@ class ForestLine:
         self._round = rounding
         self._colour = object_colour
 
-    def make_line(self, height_total, height_iter, scale=0.2):
+    def make_line(self, height_total, height_iter, scale=0.1):
         """
         This will make the forest line via the standardised lower and upper bounds.
 
@@ -221,6 +221,55 @@ def create_emission_node(obj, colour, strength=1.0):
     obj.data.materials.append(mat)
 
 
+def make_axis(colour, height_end, x_min, x_max, width=0.01):
+    """
+    Creates the horizontal and vertical axis
+
+    :param colour: Axis colour
+    :type colour: (int, int, int, int)
+
+    :param height_end: The end value of the height iterator
+    :type height_end: float
+
+    :param x_min: Min value of x
+    :type x_min: float
+
+    :param x_max: Max value of x
+    :type x_max: float
+
+    :param width: Width of the axis
+    :type width: float
+
+    :return: Nothing
+    :rtype: None
+    """
+    # Make the block
+    mesh = bpy.data.meshes.new("axis")  # add the new mesh
+    obj = bpy.data.objects.new(mesh.name, mesh)
+    create_emission_node(obj, colour)
+    col = bpy.data.collections.get("Collection")
+    col.objects.link(obj)
+    bpy.context.view_layer.objects.active = obj
+
+    # 4 verts made with XYZ coords
+    verts = [
+        # Vertical axis
+        (width / 2, 0, -width),
+        (width / 2, height_end, -width),
+        (-width / 2, height_end, -width),
+        (-width / 2, 0, -width),
+
+        # Horizontal axis
+        (x_max, height_end, -width),
+        (x_max, height_end - width, -width),
+        (x_min, height_end - width, -width),
+        (x_min, height_end, -width)
+             ]
+    edges = []
+    faces = [[0, 1, 2, 3], [4, 5, 6, 7]]
+    mesh.from_pydata(verts, edges, faces)
+
+
 if __name__ == '__main__':
 
     csv_path = r"C:\Users\Samuel\PycharmProjects\pyBlendFigures\Tests\ScarletAverage1_TEMP.csv"
@@ -233,21 +282,26 @@ if __name__ == '__main__':
     var_bound = -0.8  # Defaults to 1, Expose
     numeric_bound = 0.8  # Defaults to 1, expose
     rounder = 3  # Defaults to 3, Expose
-    text_colour = (0, 0, 0, 0)
+    text_colour = (0, 0, 0, 0)  # Defaults to black, Expose
+    axis_width = 0.005  # Defaults to this?, Expose
+    y_scale = 0.1  # Defaults to 0.1, Expose
+    axis_colour = (20, 20, 20, 0)  # Defaults to (20, 20, 20, 0), Expose
 
-    x_res = 2160
-    y_res = 2160
+    x_res = 2160  # Defaults to 1080, Expose
+    y_res = 2160  # Defaults to 1080, Expose
 
     # For each row represents a line we wish to plot
     variable_names = []
+    bound_values = []
     for row in csv_rows:
 
         # Create an object to construct the necessary components
         forest_obj = ForestLine(row, coefficient_radius, rounder, text_colour)
         variable_names.append(forest_obj.var_name)
+        bound_values = bound_values + [float(forest_obj.lb_plot), float(forest_obj.ub_plot)]
 
         # Create the line
-        current_name = forest_obj.make_line(height_max, height_iterator)
+        current_name = forest_obj.make_line(height_max, height_iterator, y_scale)
         y_mean = forest_obj.make_coefficient(current_name)
 
         # Set the variable name
@@ -260,10 +314,9 @@ if __name__ == '__main__':
 
         height_max -= height_iterator
 
-    # TODO
     # Make y axis from the min and max values of the standardised rows
-    # make dividing line
-    # make title
+    make_axis(axis_colour, height_max, min(bound_values), max(bound_values), axis_width)
+    height_max -= height_iterator
 
     # Set the output resolution
     bpy.context.scene.render.resolution_x = x_res
