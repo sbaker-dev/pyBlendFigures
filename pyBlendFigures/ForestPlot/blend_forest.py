@@ -23,8 +23,8 @@ class ForestLine:
         :param scale: How much to scale on y, defaults to 0.2
         :type scale: float
 
-        :return: Nothing, create line then stop
-        :rtype: None
+        :return: The object name of the created element
+        :rtype: str
         """
         # Make the block
         mesh = bpy.data.meshes.new(self.var_name)  # add the new mesh
@@ -46,6 +46,34 @@ class ForestLine:
         bpy.data.objects[obj.name].select_set(True)
         bpy.ops.object.editmode_toggle()
         bpy.ops.transform.resize(value=(1, scale, 1), orient_type='GLOBAL')
+        bpy.ops.object.editmode_toggle()
+        bpy.ops.object.select_all(action='DESELECT')
+        return obj.name
+
+    def make_coefficient(self, object_name, radius):
+        """
+        Create a coefficient blip for this line
+
+        :param object_name: Line object's name
+        :type object_name: str
+
+        :param radius: Radius of the circle
+        :type radius: float
+
+        :return: Nothing, create circle then stop.
+        :rtype: None
+        """
+
+        # Get the middle y position of the line via the mean of its y positions
+        y_mean = statistics.mean([box_cord[1] for box_cord in bpy.data.objects[object_name].bound_box])
+
+        # Create the primitive circle
+        bpy.ops.mesh.primitive_circle_add(
+            enter_editmode=True, align='WORLD', location=(float(self.coef_plot), y_mean, 0.1), radius=radius)
+        bpy.context.object.name = f"{object_name}_coef"
+
+        # Circle to default to edit mode, use this to fill the circle in, then toggle out and deselect.
+        bpy.ops.mesh.edge_face_add()
         bpy.ops.object.editmode_toggle()
         bpy.ops.object.select_all(action='DESELECT')
 
@@ -85,7 +113,7 @@ if __name__ == '__main__':
     height_iterator = 0.04  # Expose
     height_max = 0
     # spacing = height_iter * 2
-    # radius = 0.00015
+    coefficient_radius = 0.007
     # rounder = 3
     # cat_spacing = 0.75
     # var_spacing = 1
@@ -98,9 +126,9 @@ if __name__ == '__main__':
         forest_obj = ForestLine(row)
 
         # Create the line
-        forest_obj.make_line(height_max, height_iterator)
+        current_name = forest_obj.make_line(height_max, height_iterator)
+        forest_obj.make_coefficient(current_name, coefficient_radius)
         height_max -= height_iterator
-        break
 
     print("")
 
@@ -123,13 +151,7 @@ if __name__ == '__main__':
     #
     #
     #
-    #         # Create the coefficent circle
-    #         y_mean = statistics.mean([box_cord[1] for box_cord in bpy.data.objects[obj.name].bound_box])
-    #         bpy.ops.mesh.primitive_circle_add(enter_editmode=True, align='WORLD', location=(float(coef), y_mean, 0.1),
-    #                                           radius=radius)
-    #         bpy.ops.mesh.edge_face_add()
-    #         bpy.ops.object.editmode_toggle()
-    #         bpy.ops.object.select_all(action='DESELECT')
+
     #
     #         # Set the confident / numeric output
     #         bpy.ops.object.text_add(location=(bound * numeric_spacing, y_mean, 0))
