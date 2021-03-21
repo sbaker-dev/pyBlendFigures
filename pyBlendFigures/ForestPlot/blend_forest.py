@@ -5,10 +5,14 @@ import statistics
 
 
 class ForestLine:
-    def __init__(self, row):
-        self.var_name, self.coef, self.coef_plot, self.lb, self.lb_plot, self.ub, self.ub_plot = row
+    def __init__(self, row_values, radius_of_coefficient, rounding):
 
-        print(self.var_name, self.coef, self.coef_plot, self.lb, self.lb_plot, self.ub, self.ub_plot)
+        # Set the values from the row that was read in via the temp csv
+        self.var_name, self.coef, self.coef_plot, self.lb, self.lb_plot, self.ub, self.ub_plot = row_values
+
+        # Set the values required to create the blend objects
+        self._radius = radius_of_coefficient
+        self._round = rounding
 
     def make_line(self, height_total, height_iter, scale=0.2):
         """
@@ -50,26 +54,23 @@ class ForestLine:
         bpy.ops.object.select_all(action='DESELECT')
         return obj.name
 
-    def make_coefficient(self, object_name, radius):
+    def make_coefficient(self, object_name):
         """
         Create a coefficient blip for this line
 
         :param object_name: Line object's name
         :type object_name: str
 
-        :param radius: Radius of the circle
-        :type radius: float
-
-        :return: Nothing, create circle then stop.
-        :rtype: None
+        :return: The mid point of the line
+        :rtype: float
         """
 
         # Get the middle y position of the line via the mean of its y positions
-        y_mean = statistics.mean([box_cord[1] for box_cord in bpy.data.objects[object_name].bound_box])
+        y_mean_val = statistics.mean([box_cord[1] for box_cord in bpy.data.objects[object_name].bound_box])
 
         # Create the primitive circle
         bpy.ops.mesh.primitive_circle_add(
-            enter_editmode=True, align='WORLD', location=(float(self.coef_plot), y_mean, 0.1), radius=radius)
+            enter_editmode=True, align='WORLD', location=(float(self.coef_plot), y_mean_val, 0.1), radius=self._radius)
         bpy.context.object.name = f"{object_name}_coef"
 
         # Circle to default to edit mode, use this to fill the circle in, then toggle out and deselect.
@@ -77,28 +78,77 @@ class ForestLine:
         bpy.ops.object.editmode_toggle()
         bpy.ops.object.select_all(action='DESELECT')
 
-
-def isolate_rows():
-    with open(r"C:\Users\Samuel\PycharmProjects\pyBlendFigures\Tests\ScarletAverage1_TEMP.csv", "r",
-              encoding="utf-8-sig") as csv_file:
-        # Isolate the rows from the file
-        return [row for i, row in enumerate(csv.reader(csv_file)) if i > 0]
+        # Return the y mean for positioning the text
+        return y_mean_val
 
 
-def set_bound(row_info):
-    min_bound = max([abs(float(row[-1])) for i, row in enumerate(row_info) if i > 0])
-    max_bound = max([abs(float(row[-2])) for i, row in enumerate(row_info) if i > 0])
-    return max([min_bound, max_bound]) * 2
+def isolate_rows(path_to_csv):
+    """
+    Isolate the row content from the csv file provided
+
+    :param path_to_csv: The path to the csv file to load
+    :type path_to_csv: str
+
+    :return: The row content to use for the construction, removes the first row due to presumed headers
+    :rtype: list
+    """
+    with open(path_to_csv, "r", encoding="utf-8-sig") as csv_file:
+        return [r for i, r in enumerate(csv.reader(csv_file)) if i > 0]
+
+
+def make_text(bound, y_mean_val, text, height_iter):
+    """
+    Creates a text object starting at x 'bound' and at y 'y_mean_val' displaying 'text'. It is scaled to be equal to the
+    objects via the 'height_iter'
+
+    :param bound: Starting x position
+    :type bound: float
+
+    :param y_mean_val: Y position
+    :type y_mean_val: float
+
+    :param text: Text to display
+    :type text: str
+
+    :param height_iter: Scaling about to make text relative to all other components
+    :type height_iter: float
+
+    :return: Nothing, make the text object then stop
+    """
+
+    # Create the text object
+    bpy.ops.object.text_add(location=(bound, y_mean_val, 0))
+
+    # Set its name
+    ob = bpy.context.object
+    ob.data.body = text
+
+    # Scale it relative to all other elements
+    bpy.ops.transform.resize(value=(height_iter, height_iter, height_iter))
+    bpy.ops.object.select_all(action='DESELECT')
 
 
 def set_values(value, rounding_value):
+    """
+    Rounding may lead to values not being the right length when converted to strings. This formats them
+
+    :param value: Value to turn into a string
+    :type value: float | int
+
+    :param rounding_value: Rounding value target
+    :type rounding_value: int
+
+    :return: string representation of the rounded 'value', where rounding is set by rounding_value
+    :rtype: str
+    """
     set_rounding = round(float(value), rounding_value)
     if set_rounding < 0:
         rounding_value += 3
+        set_rounding = str(set_rounding)
     else:
         rounding_value += 2
+        set_rounding = f" {set_rounding}"
 
-    set_rounding = str(set_rounding)
     if len(set_rounding) == rounding_value:
         return set_rounding
     else:
@@ -107,76 +157,37 @@ def set_values(value, rounding_value):
 
 if __name__ == '__main__':
 
-    csv_rows = isolate_rows()
+    csv_path = r"C:\Users\Samuel\PycharmProjects\pyBlendFigures\Tests\ScarletAverage1_TEMP.csv"
+    csv_rows = isolate_rows(csv_path)
 
-    # bound = set_bound(csv_rows)
-    height_iterator = 0.04  # Expose
     height_max = 0
-    # spacing = height_iter * 2
-    coefficient_radius = 0.007
-    # rounder = 3
-    # cat_spacing = 0.75
-    # var_spacing = 1
-    # numeric_spacing = 0.8
+    height_iterator = 0.04  # Expose
+
+    coefficient_radius = 0.007  # Expose
+    var_bound = -0.8  # Defaults to 1, Expose
+    numeric_bound = 0.8  # Defaults to 1, expose
+    rounder = 3  # Defaults to 3, Expose
 
     # For each row represents a line we wish to plot
     for row in csv_rows:
 
         # Create an object to construct the necessary components
-        forest_obj = ForestLine(row)
+        forest_obj = ForestLine(row, coefficient_radius, rounder)
 
         # Create the line
         current_name = forest_obj.make_line(height_max, height_iterator)
-        forest_obj.make_coefficient(current_name, coefficient_radius)
+        y_mean = forest_obj.make_coefficient(current_name)
+
+        # Set the variable name
+        make_text(var_bound, y_mean, forest_obj.var_name, height_iterator)
+
+        # Create the numeric string
+        numeric = f"{set_values(forest_obj.coef, rounder)} ({set_values(forest_obj.ub, rounder)}; " \
+                  f"{set_values(forest_obj.lb, rounder)})"
+        make_text(numeric_bound, y_mean, numeric, height_iterator)
+
         height_max -= height_iterator
 
-    print("")
-
-    # # Group rows
-    # groupings = {row[0]: [] for row in csv_rows}
-    # for category in groupings.keys():
-    #     for row in csv_rows:
-    #         if row[0] == category:
-    #             groupings[category].append(row[1:])
-    #
-    # #todo we need ot make the axis
-    #
-    # # For each category
-    # for index, (cat, cat_row) in enumerate(groupings.items()):
-    #
-    #     category_y = []
-    #
-    #     for i, row in enumerate(cat_row, 1):
-    #         var_name, coef, se, lb, ub = row
-    #
-    #
-    #
-
-    #
-    #         # Set the confident / numeric output
-    #         bpy.ops.object.text_add(location=(bound * numeric_spacing, y_mean, 0))
-    #         ob = bpy.context.object
-    #         ob.data.body = f"{set_values(coef, rounder)} ({set_values(lb, rounder)}; {set_values(ub, rounder)})"
-    #         bpy.ops.transform.resize(value=(height_iter, height_iter, height_iter))
-    #         bpy.ops.object.select_all(action='DESELECT')
-    #
-    #         # Set the variable name
-    #         bpy.ops.object.text_add(location=(-bound * var_spacing, y_mean, 0))
-    #         ob = bpy.context.object
-    #         ob.data.body = var_name
-    #         bpy.ops.transform.resize(value=(height_iter, height_iter, height_iter))
-    #         bpy.ops.object.select_all(action='DESELECT')
-    #
-    #         category_y.append(y_mean)
-    #         height_total -= height_iter
-    #
-    #     # Add the category
-    #     bpy.ops.object.text_add(location=((-bound * 2) * cat_spacing, min(category_y), 0))
-    #     ob = bpy.context.object
-    #     ob.data.body = cat
-    #     bpy.ops.transform.resize(value=(height_iter * 2, height_iter * 2, height_iter * 2))
-    #     bpy.ops.object.select_all(action='DESELECT')
-    #     height_total -= spacing
-    #todo set dimensions
+    # todo set dimensions
     # todo create a base forest blend
-print("")
+    print("")
