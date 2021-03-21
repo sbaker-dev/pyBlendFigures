@@ -1,7 +1,9 @@
-import csv
 import bpy
 import bmesh
+
+from pathlib import Path
 import statistics
+import csv
 
 
 class ForestLine:
@@ -276,7 +278,7 @@ def make_axis(colour, height_end, x_min, x_max, width=0.01):
 
 if __name__ == '__main__':
 
-    csv_path = r"C:\Users\Samuel\PycharmProjects\pyBlendFigures\Tests\ScarletAverage1_TEMP.csv"
+    csv_path = r"C:\Users\Samuel\PycharmProjects\pyBlendFigures\Tests\ScarletAverage5_TEMP.csv"
     csv_rows = isolate_rows(csv_path)
 
     height_max = 0
@@ -293,6 +295,9 @@ if __name__ == '__main__':
 
     x_res = 2160  # Defaults to 1080, Expose
     y_res = 2160  # Defaults to 1080, Expose
+    write_directory = r"C:\Users\Samuel\PycharmProjects\pyBlendFigures\Tests"
+    image_name = "Scarlet5"
+    image_type = "png"
 
     # For each row represents a line we wish to plot
     variable_names = []
@@ -335,7 +340,7 @@ if __name__ == '__main__':
     bpy.context.scene.render.resolution_y = y_res
 
     # Render the scene
-    bpy.context.scene.render.filepath = r'C:\Users\Samuel\PycharmProjects\pyBlendFigures\Tests\TTT.png'
+    bpy.context.scene.render.filepath = str(Path(write_directory, f"{image_name}.{image_type}").absolute())
     bpy.context.scene.eevee.use_gtao = True
     bpy.context.scene.render.film_transparent = True
     bpy.ops.render.render(write_still=True)
