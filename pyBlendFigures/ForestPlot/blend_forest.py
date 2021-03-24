@@ -4,11 +4,11 @@ import bmesh
 from pathlib import Path
 import statistics
 import csv
+import sys
 
 
 class ForestLine:
     def __init__(self, row_values, radius_of_coefficient, rounding, object_colour):
-
         # Set the values from the row that was read in via the temp csv
         self.var_name, self.coef, self.coef_plot, self.lb, self.lb_plot, self.ub, self.ub_plot = row_values
 
@@ -104,6 +104,12 @@ def isolate_rows(path_to_csv):
         return [r for i, r in enumerate(csv.reader(csv_file)) if i > 0]
 
 
+def convert_colour(str_of_tuple):
+    """Convert rgb 0-1 scalar back to a tuple"""
+    split_values = str_of_tuple.split(",")
+    return tuple([float(vv.replace("(", "").replace(")", "")) for vv in split_values])
+
+
 def make_text(object_name, bound, y_mean_val, text, height_iterator, object_colour, align="LEFT"):
     """
     Creates a text object starting at x 'bound' and at y 'y_mean_val' displaying 'text'. It is scaled to be equal to the
@@ -125,9 +131,9 @@ def make_text(object_name, bound, y_mean_val, text, height_iterator, object_colo
     :type height_iterator: float
 
     :param object_colour: RGBA colour of the object
-    :type object_colour: (int, int, int, int) | (float, float, float, float)
 
-    :param align:
+    :param align: Aligns the text, Takes LEFT, RIGHT, and CENTER
+    :type align: str
 
     :return: Nothing, make the text object then stop
     """
@@ -185,7 +191,6 @@ def create_emission_node(obj, colour, strength=1.0):
     :param obj: The current blender object
 
     :param colour: RGBA colour
-    :type colour: (int, int, int, int) | (float, float, float, float)
 
     :param strength: Intensity of the emission node
     :type strength: float
@@ -231,7 +236,6 @@ def make_axis(colour, height_end, x_min, x_max, width=0.01):
     Creates the horizontal and vertical axis
 
     :param colour: Axis colour
-    :type colour: (int, int, int, int) | (float, float, float, float)
 
     :param height_end: The end value of the height iterator
     :type height_end: float
@@ -269,7 +273,7 @@ def make_axis(colour, height_end, x_min, x_max, width=0.01):
         (x_max, height_end - width, -width),
         (x_min, height_end - width, -width),
         (x_min, height_end, -width)
-             ]
+    ]
     edges = []
     faces = [[0, 1, 2, 3], [4, 5, 6, 7]]
     mesh.from_pydata(verts, edges, faces)
@@ -278,33 +282,34 @@ def make_axis(colour, height_end, x_min, x_max, width=0.01):
 
 if __name__ == '__main__':
 
-    csv_path = r"C:\Users\Samuel\PycharmProjects\pyBlendFigures\Tests\ScarletAverage5_TEMP.csv"
+    variables = sys.argv[len(sys.argv) - 1].split("__")
+
+    csv_path, image_name, height_iter, coefficient_radius, var_bound, ci_bound, rounder, text_colour, \
+        axis_width, y_scale, axis_colour, x_resolution, y_resolution, image_type, write_directory, camera_scale \
+        = variables
+
+    height_iter = float(height_iter)
+    coefficient_radius = float(coefficient_radius)
+    var_bound = float(var_bound)
+    ci_bound = float(ci_bound)
+    rounder = int(rounder)
+    text_colour = convert_colour(text_colour)
+    axis_width = float(axis_width)
+    y_scale = float(y_scale)
+    axis_colour = convert_colour(axis_colour)
+    x_resolution = int(x_resolution)
+    y_resolution = int(y_resolution)
+    camera_scale = float(camera_scale)
+
+    # csv_path = r"C:\Users\Samuel\PycharmProjects\pyBlendFigures\Tests\ScarletAverage5_TEMP.csv"
     csv_rows = isolate_rows(csv_path)
-
-    height_max = 0
-    height_iter = 0.04  # Expose
-
-    coefficient_radius = 0.007  # Expose
-    var_bound = -0.8  # Defaults to 1, Expose
-    numeric_bound = 0.8  # Defaults to 1, expose
-    rounder = 3  # Defaults to 3, Expose
-    text_colour = (0, 0, 0, 0)  # Defaults to black, Expose
-    axis_width = 0.005  # Defaults to this?, Expose
-    y_scale = 0.1  # Defaults to 0.1, Expose
-    axis_colour = (0.02, 0.02, 0.02, 0)  # Defaults to (0.02, 0.02, 0.02, 0), Expose
-
-    x_res = 2160  # Defaults to 1080, Expose
-    y_res = 2160  # Defaults to 1080, Expose
-    write_directory = r"C:\Users\Samuel\PycharmProjects\pyBlendFigures\Tests"
-    image_name = "Scarlet5"
-    image_type = "png"
 
     # For each row represents a line we wish to plot
     variable_names = []
     extent_values = []
     bound_values = []
+    height_max = 0
     for row in csv_rows:
-
         # Create an object to construct the necessary components
         forest_obj = ForestLine(row, coefficient_radius, rounder, text_colour)
         variable_names.append(forest_obj.var_name)
@@ -321,7 +326,7 @@ if __name__ == '__main__':
         # Create the numeric string
         numeric = f"{set_values(forest_obj.coef, rounder)} ({set_values(forest_obj.lb, rounder)}; " \
                   f"{set_values(forest_obj.ub, rounder)})"
-        make_text(forest_obj.var_name, numeric_bound, y_mean, numeric, height_iter, text_colour)
+        make_text(forest_obj.var_name, ci_bound, y_mean, numeric, height_iter, text_colour)
 
         height_max -= height_iter
 
@@ -335,12 +340,15 @@ if __name__ == '__main__':
               "RIGHT")
     make_text("Mid_Point", 0, height_max, str(0.0), height_iter, text_colour, "CENTER")
 
-    # Set the output resolution
-    bpy.context.scene.render.resolution_x = x_res
-    bpy.context.scene.render.resolution_y = y_res
+    # Set the output resolution and camera scale
+    bpy.context.scene.render.resolution_x = x_resolution
+    bpy.context.scene.render.resolution_y = y_resolution
+    bpy.data.objects["Camera"].data.ortho_scale = camera_scale
 
     # Render the scene
     bpy.context.scene.render.filepath = str(Path(write_directory, f"{image_name}.{image_type}").absolute())
     bpy.context.scene.eevee.use_gtao = True
     bpy.context.scene.render.film_transparent = True
     bpy.ops.render.render(write_still=True)
+
+    bpy.ops.wm.save_as_mainfile(filepath=f"{write_directory}/{image_name}.blend")
