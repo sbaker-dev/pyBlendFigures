@@ -81,7 +81,7 @@ class ForestLine:
         bpy.ops.object.editmode_toggle()
 
         # Set the name and material of the circle, then toggle out and deselect.
-        bpy.context.object.name = f"{object_name}_var_name"
+        bpy.context.object.name = f"{object_name}_coefficient"
         obj = bpy.context.object
         create_emission_node(obj, self._colour)
         bpy.ops.object.select_all(action='DESELECT')
@@ -145,7 +145,7 @@ def make_text(object_name, bound, y_mean_val, text, height_iterator, object_colo
     obj = bpy.context.object
     obj.data.body = text
     create_emission_node(obj, object_colour)
-    bpy.context.object.name = f"{object_name}_var_name"
+    bpy.context.object.name = object_name
     bpy.context.object.data.align_x = align
 
     # Scale it relative to all other elements
@@ -321,12 +321,12 @@ if __name__ == '__main__':
         y_mean = forest_obj.make_coefficient(current_name)
 
         # Set the variable name
-        make_text(forest_obj.var_name, var_bound, y_mean, forest_obj.var_name, height_iter, text_colour)
+        make_text(f"{forest_obj.var_name}_var_name", var_bound, y_mean, forest_obj.var_name, height_iter, text_colour)
 
         # Create the numeric string
         numeric = f"{set_values(forest_obj.coef, rounder)} ({set_values(forest_obj.lb, rounder)}; " \
                   f"{set_values(forest_obj.ub, rounder)})"
-        make_text(forest_obj.var_name, ci_bound, y_mean, numeric, height_iter, text_colour)
+        make_text(f"{forest_obj.var_name}_CI", ci_bound, y_mean, numeric, height_iter, text_colour)
 
         height_max -= height_iter
 
