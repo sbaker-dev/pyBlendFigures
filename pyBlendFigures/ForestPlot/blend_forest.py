@@ -319,8 +319,8 @@ if __name__ == '__main__':
         make_text(forest_obj.var_name, var_bound, y_mean, forest_obj.var_name, height_iter, text_colour)
 
         # Create the numeric string
-        numeric = f"{set_values(forest_obj.coef, rounder)} ({set_values(forest_obj.ub, rounder)}; " \
-                  f"{set_values(forest_obj.lb, rounder)})"
+        numeric = f"{set_values(forest_obj.coef, rounder)} ({set_values(forest_obj.lb, rounder)}; " \
+                  f"{set_values(forest_obj.ub, rounder)})"
         make_text(forest_obj.var_name, numeric_bound, y_mean, numeric, height_iter, text_colour)
 
         height_max -= height_iter
