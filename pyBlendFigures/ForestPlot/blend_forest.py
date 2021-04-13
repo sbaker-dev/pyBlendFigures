@@ -294,8 +294,8 @@ if __name__ == '__main__':
     variables = sys.argv[len(sys.argv) - 1].split("__")
 
     csv_path, image_name, height_iter, coefficient_radius, value_title, var_bound, ci_bound, rounder, text_colour, \
-        axis_width, y_scale, axis_colour, x_resolution, y_resolution, image_type, write_directory, camera_scale \
-        = variables
+        axis_width, axis_label, axis_colour, y_scale, x_resolution, y_resolution, image_type, write_directory, \
+        camera_scale = variables
 
     height_iter = float(height_iter)
     coefficient_radius = float(coefficient_radius)
@@ -356,6 +356,9 @@ if __name__ == '__main__':
     make_text("Max_Bound", max(extent_values), height_max, str(round(max(bound_values), 2)), height_iter, text_colour,
               "RIGHT")
     make_text("Mid_Point", 0, height_max, str(0.0), height_iter, text_colour, "CENTER")
+
+    # # Add the x axis label
+    make_text("Axis Label", 0, height_max - height_iter, axis_label, height_iter, text_colour, align="CENTER")
 
     # Set the output resolution and camera scale
     bpy.context.scene.render.resolution_x = x_resolution
