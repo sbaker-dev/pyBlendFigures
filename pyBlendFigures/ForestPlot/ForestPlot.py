@@ -54,9 +54,10 @@ class ForestPlot(BlendController):
         write_csv(self.working_dir, f"{csv_data.file_path.stem}_TEMP", self._forest_header, temp_csv)
         return Path(self.working_dir, f"{csv_data.file_path.stem}_TEMP.csv")
 
-    def write_forest_blend(self, image_name, height_iteration, coefficient_radius, variable_bound=-1, ci_bound=1,
-                           rounder=3, text_colour="Black", axis_width=0.005, y_scale=0.1, axis_colour="Dark_Grey",
-                           x_resolution=1080, y_resolution=1080, image_type="png", camera_scale=4):
+    def write_forest_blend(self, image_name, height_iteration, coefficient_radius, value_title, variable_bound=-1,
+                           ci_bound=1, rounder=3, text_colour="Black", axis_width=0.005, y_scale=0.1,
+                           axis_colour="Dark_Grey", x_resolution=1080, y_resolution=1080, image_type="png",
+                           camera_scale=4):
 
         # TODO allow for colours to actually mean something
         # todo allow rgb and convert to hex. See:
@@ -66,9 +67,9 @@ class ForestPlot(BlendController):
         text_colour = (0, 0, 0, 0)
         axis_colour = (0.2, 0.2, 0.2, 0)
 
-        args = [self._load_path, image_name, height_iteration, coefficient_radius, variable_bound, ci_bound, rounder,
-                text_colour, axis_width, y_scale, axis_colour, x_resolution, y_resolution, image_type,
-                self.working_dir, camera_scale]
+        args = [self._load_path, image_name, height_iteration, coefficient_radius, value_title, variable_bound,
+                ci_bound, rounder, text_colour, axis_width, y_scale, axis_colour, x_resolution, y_resolution,
+                image_type, self.working_dir, camera_scale]
         args = [str(arg) for arg in args]
 
         subprocess.Popen(

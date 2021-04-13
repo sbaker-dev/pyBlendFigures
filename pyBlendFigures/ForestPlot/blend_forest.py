@@ -293,7 +293,7 @@ if __name__ == '__main__':
 
     variables = sys.argv[len(sys.argv) - 1].split("__")
 
-    csv_path, image_name, height_iter, coefficient_radius, var_bound, ci_bound, rounder, text_colour, \
+    csv_path, image_name, height_iter, coefficient_radius, value_title, var_bound, ci_bound, rounder, text_colour, \
         axis_width, y_scale, axis_colour, x_resolution, y_resolution, image_type, write_directory, camera_scale \
         = variables
 
@@ -320,26 +320,36 @@ if __name__ == '__main__':
     for row in csv_rows:
         # Create an object to construct the necessary components
         forest_obj = ForestLine(row, coefficient_radius, rounder, text_colour)
-        extent_values = extent_values + [float(forest_obj.lb_plot), float(forest_obj.ub_plot)]
-        bound_values = bound_values + [float(forest_obj.lb), float(forest_obj.ub)]
 
-        # Create the line
-        current_name = forest_obj.make_line(height_max, height_iter, y_scale)
-        y_mean = forest_obj.make_coefficient(current_name)
+        if forest_obj.var_name == "#Delete":
+            height_max -= height_iter
 
-        # Set the variable name
-        make_text(f"{forest_obj.var_name}_var_name", var_bound, y_mean, forest_obj.var_name, height_iter, text_colour)
+        else:
+            extent_values = extent_values + [float(forest_obj.lb_plot), float(forest_obj.ub_plot)]
+            bound_values = bound_values + [float(forest_obj.lb), float(forest_obj.ub)]
 
-        # Create the numeric string
-        numeric = f"{set_values(forest_obj.coef, rounder)} ({set_values(forest_obj.lb, rounder)}; " \
-                  f"{set_values(forest_obj.ub, rounder)})"
-        make_text(f"{forest_obj.var_name}_CI", ci_bound, y_mean, numeric, height_iter, text_colour)
+            # Create the line
+            current_name = forest_obj.make_line(height_max, height_iter, y_scale)
+            y_mean = forest_obj.make_coefficient(current_name)
 
-        height_max -= height_iter
+            # Set the variable name
+            make_text(f"{forest_obj.var_name}_var_name", var_bound, y_mean, forest_obj.var_name, height_iter,
+                      text_colour)
+
+            # Create the numeric string
+            numeric = f"{set_values(forest_obj.coef, rounder)} ({set_values(forest_obj.lb, rounder)}; " \
+                      f"{set_values(forest_obj.ub, rounder)})"
+            make_text(f"{forest_obj.var_name}_CI", ci_bound, y_mean, numeric, height_iter, text_colour)
+
+            height_max -= height_iter
 
     # Make y axis from the min and max values of the standardised rows
     make_axis(axis_colour, height_max, min(extent_values), max(extent_values), axis_width)
     height_max -= height_iter
+
+    # Label left an right most columns
+    make_text("Phenotype", var_bound, height_iter, "Phenotype", height_iter, text_colour)
+    make_text(value_title, ci_bound, height_iter, value_title, height_iter, text_colour)
 
     # Add values based on a range between the min and max equally divided
     make_text("Min_Bound", min(extent_values), height_max, set_values(min(bound_values), 2), height_iter, text_colour)
