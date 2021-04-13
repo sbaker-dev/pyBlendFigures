@@ -314,14 +314,12 @@ if __name__ == '__main__':
     csv_rows = isolate_rows(csv_path)
 
     # For each row represents a line we wish to plot
-    variable_names = []
     extent_values = []
     bound_values = []
     height_max = 0
     for row in csv_rows:
         # Create an object to construct the necessary components
         forest_obj = ForestLine(row, coefficient_radius, rounder, text_colour)
-        variable_names.append(forest_obj.var_name)
         extent_values = extent_values + [float(forest_obj.lb_plot), float(forest_obj.ub_plot)]
         bound_values = bound_values + [float(forest_obj.lb), float(forest_obj.ub)]
 
