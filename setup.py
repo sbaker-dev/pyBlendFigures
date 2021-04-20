@@ -18,7 +18,7 @@ VERSION = "0.03.0"
 PYTHON_REQUIRES = ">=3.7"
 
 INSTALL_REQUIRES = [
-    'miscSupports', 'csvObject', 'numpy']
+    'miscSupports', 'csvObject', 'numpy', 'imageObjects']
 
 CLASSIFIERS = [
     'Programming Language :: Python :: 3.7',
