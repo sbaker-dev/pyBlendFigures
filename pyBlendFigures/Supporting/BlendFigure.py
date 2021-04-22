@@ -15,10 +15,64 @@ class BlendFigure:
                     variable_bound=1.0, ci_bound=0.1, rounder=3, text_colour="Black", axis_width=0.005,
                     axis_label="X_Axis", axis_colour="Dark_Grey", y_scale=0.1, x_resolution=1080,
                     y_resolution=1080, image_type="png", camera_scale=4):
+        """
+        Will create a forest plot
 
-        print(self._prepare_args(locals()))
+        :param csv_path: Path to csv data containing four columns of phenotype, coefficient, lower bound, upper bound
+        :type csv_path: str | Path
 
-        print(Path(self._blend_scripts, "ForestPlot.py").exists())
+        :param image_name: Name of output image
+        :type image_name: str
+
+        :param height_iteration: Amount of y space to place between each element
+        :type height_iteration: float
+
+        :param coefficient_radius: Radius of point estimate circles
+        :type coefficient_radius: float
+
+        :param value_title: Title to appear above the values
+        :type value_title: str
+
+        :param variable_bound: How much distance to place between the forest plot and the variable names, defaults to 1
+        :type variable_bound: float
+
+        :param ci_bound: How much distance to place between the forest plot and the numerical values, defaults to 0.1
+        :type ci_bound: float
+
+        :param rounder: How many decimal places to round numbers to for numeric column, defaults to 3
+        :type rounder: int
+
+        :param text_colour: The colour of the text, may take str values of "Dark_Grey", "Grey", "Black", "White",
+            "Blue", "Red", "Green", or a tuple/list of a rgba value bound between 0 and 1, defaults to "Black".
+        :type text_colour: str | list | tuple
+
+        :param axis_width: The width of the axis, defaults to 0.005
+        :type axis_width: float
+
+        :param axis_label: Label for the x Axis, defaults to "X_Axis"
+        :type axis_colour: str
+
+        :param axis_colour: The colour of the axis (see text_colour for options), defaults to "Dark_Grey"
+        :type axis_colour: str | list | tuple
+
+        :param y_scale: Width of the line, defaults to 0.1
+        :type y_scale: float
+
+        :param x_resolution: X dimension of image output, defaults to 1080
+        :type x_resolution: int
+
+        :param y_resolution: Y dimension of image output, defaults to 1080
+        :type y_resolution: int
+
+        :param image_type: Image type, defaults to png
+        :type image_type: str
+
+        :param camera_scale: Orthographic camera scale, defaults to 4
+        :type camera_scale: float
+
+        :return: Nothing, process then finish
+        :rtype: None
+        """
 
         subprocess.Popen([self._blend_path, "-b", self._base_file, "--python",
                           str(Path(self._blend_scripts, "ForestPlot.py")), self._prepare_args(locals())])
