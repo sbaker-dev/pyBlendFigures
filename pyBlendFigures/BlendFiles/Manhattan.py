@@ -1,8 +1,9 @@
 from blendSupports.Supports.collection_cleanup import collection_cleanup
+from blendSupports.Supports.blend_logging import BlendLogger
+from blendSupports.misc import convert_colour
 
 from miscSupports import open_setter, decode_line, terminal_time, normalisation_min_max
 from pathlib import Path
-import logging
 import json
 import math
 import ast
@@ -12,28 +13,31 @@ import sys
 
 class Manhattan:
     def __init__(self, args):
-        write_directory, summary_path, chromosome_selection, chromosome_headers, snp_header, \
-            base_position_header, p_value_header, positions = args.split("__")
+        write_directory, write_name, summary_path, chromosome_selection, chromosome_headers, snp_header, \
+            base_position_header, p_value_header, camera_position, camera_scale, positions = args
+
+        # todo we also need to have some axises produced for the render
 
         self.write_directory = write_directory
 
         # Setup the blend file
-        self.configure_blend()
+        self.configure_blend(convert_colour(camera_position), float(camera_scale))
 
         # Set the summary file, and determine if its zipped or not
         self.summary_file = Path(summary_path)
         self.zipped = self.summary_file.suffix == ".gz"
 
-        # Setup logging
-        logging.basicConfig(filename=str(Path(self.write_directory, f"{self.summary_file.stem}.log").absolute()),
-                            level=logging.INFO)
-        self.logger = logging.getLogger(Path(self.write_directory, f"{self.summary_file.stem}.log"))
-        self.logger.info(f"Starting {self.summary_file.stem}: {terminal_time()}\n")
+        # If the file is zipped it will have .txt.gz/zip/something, this isolates the actual name regardless of zips
+        self.write_name = write_name
+        self.logger = BlendLogger(self.write_directory, f"{self.write_name}.log")
+        self.logger.write_to_log(f"Starting {self.summary_file.stem}: {terminal_time()}\n")
 
         # Set the headers
         self.chr_h, self.snp_h, self.bp_h, self.p_h = self.set_summary_headers(
             chromosome_headers, snp_header, base_position_header, p_value_header)
         self.header_indexes = [self.chr_h, self.snp_h, self.bp_h, self.p_h]
+
+        self.logger.write_to_log(chromosome_selection)
 
         # Evaluate the lists and, if it has been set, the positions within the file.
         chromosome_selection = json.loads(chromosome_selection)
@@ -43,12 +47,14 @@ class Manhattan:
         else:
             self.positions = ast.literal_eval(positions)
 
+        self.logger.write_to_log(chromosome_selection)
+
         # For each group, render the frames
         for index, chromosome_group in enumerate(chromosome_selection):
             self.make_manhattan(index, chromosome_group)
 
     @staticmethod
-    def configure_blend():
+    def configure_blend(camera_position, camera_scale):
         """Since we are using view port renders we need to disable must viewport features"""
         bpy.context.scene.render.film_transparent = True
         for area in bpy.context.screen.areas:
@@ -62,6 +68,11 @@ class Manhattan:
                         space.overlay.show_axis_z = False
                         space.overlay.show_cursor = False
                         space.overlay.show_object_origins = False
+
+        # Set the camera position
+        camera = bpy.data.objects["Camera"]
+        camera.location = camera_position
+        camera.data.ortho_scale = camera_scale
 
     def set_summary_headers(self, chromosome_header, snp_header, base_position_header, p_value_header):
         """
@@ -111,7 +122,7 @@ class Manhattan:
         """
 
         last_position = 0
-        self.logger.info(f"No positions found so creating them: {terminal_time()}")
+        self.logger.write_to_log(f"No positions found so creating them: {terminal_time()}")
 
         chromosome_positions = {1: 0}
         for chromosome in range(1, 23):
@@ -125,7 +136,8 @@ class Manhattan:
                     if int(line[self.chr_h]) > chromosome:
                         last_position = file.tell() - len(line_byte)
                         chromosome_positions[chromosome + 1] = last_position
-                        self.logger.info(chromosome_positions)
+                        self.logger.write_to_log(f"Determined log position of {chromosome}: {terminal_time()}")
+                        self.logger.write_to_log(chromosome_positions)
                         break
 
                 file.close()
@@ -149,7 +161,10 @@ class Manhattan:
     def make_manhattan(self, index, chromosome_group):
 
         for chromosome in chromosome_group:
-            self.logger.info(f"Starting {chromosome}")
+            self.logger.write_to_log(f"Starting {chromosome}: {terminal_time()}")
+            print(chromosome)
+
+            # Isolate the values from the file
             line_array = self.isolate_line_array(chromosome)
 
             # Bound the base pair positions between 0 and 1
@@ -169,11 +184,13 @@ class Manhattan:
 
             mesh.from_pydata(vertexes, [], [])
 
-        # Render
+        # Render and then save the file encase we want to edit it
         bpy.context.scene.render.filepath = str(
-            Path(self.write_directory, f"{self.summary_file.stem}__{index}").absolute())
+            Path(self.write_directory, f"{self.write_name}__{index}").absolute())
+        bpy.ops.wm.save_as_mainfile(filepath=f"{self.write_directory}/{self.write_name}__{index}.blend")
         bpy.ops.render.opengl(write_still=True, view_context=True)
         collection_cleanup("Collection")
+        self.logger.write_to_log(f"Finished group {index} at {terminal_time()}")
 
     def isolate_line_array(self, chromosome):
         line_array = []
@@ -196,8 +213,5 @@ class Manhattan:
         return line_array
 
 
-
 if __name__ == '__main__':
-    a = r"C:\Users\Samuel\PycharmProjects\pyBlendFigures\TestV2\Manhattan\TestFrames__Y:\data\ukbiobank\software\gwas_pipeline\dev\release_candidate\data\phenotypes\ow18390\output\M_1\789eacc2-c569-41ec-8e1c-5eadb99f05b8\M_1_imputed.txt.gz__[[1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23], [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22]]__CHR__SNP__BP__P_BOLT_LMM_INF__{1: 0, 2: 103551288, 3: 215398919, 4: 309830049, 5: 406727080, 6: 492859006, 7: 582512400, 8: 660602369, 9: 733966091, 10: 791841203, 11: 860501560, 12: 926965989, 13: 990772456, 14: 1039111338, 15: 1082777792, 16: 1120845458, 17: 1162690859, 18: 1198818737, 19: 1236446323, 20: 1267538928, 21: 1296945622, 22: 1315076297, 23: 1333582626}"
-    b = r"C:\Users\Samuel\PycharmProjects\pyBlendFigures\TestV2\Manhattan\TestFrames__Y:\data\ukbiobank\software\gwas_pipeline\dev\release_candidate\data\phenotypes\ow18390\output\M_1\789eacc2-c569-41ec-8e1c-5eadb99f05b8\M_1_imputed.txt.gz__[[1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23], [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22]]__CHR__SNP__BP__P_BOLT_LMM_INF__None"
-    Manhattan(a)
+    Manhattan(sys.argv[len(sys.argv) - 1].split("__"))
