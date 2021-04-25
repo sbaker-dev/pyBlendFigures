@@ -252,7 +252,7 @@ class Manhattan:
                 make_text(f"log{i}", axis_spacer, i, f"{i}", axis_width * 2, axis_colour, "CENTER")
 
         # Render the scene
-        bpy.context.scene.render.filepath = str(Path(self.write_directory, f"{self.write_name}_AXIS.png").absolute())
+        bpy.context.scene.render.filepath = str(Path(self.write_directory, f"{self.write_name}__AXIS.png").absolute())
         bpy.context.scene.eevee.use_gtao = True
         bpy.context.scene.render.film_transparent = True
         bpy.ops.render.render(write_still=True)
