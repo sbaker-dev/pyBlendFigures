@@ -199,7 +199,7 @@ class BlendFigure:
 
         # Isolate the unique image names
         unique_names = list(set([file.split("__")[0] for file in directory_iterator(self._working_dir)
-                                 if ".log" not in file]))
+                                 if (".log" not in file) and (".blend" not in file)]))
 
         # For each plot, compile the images
         for name in unique_names:
