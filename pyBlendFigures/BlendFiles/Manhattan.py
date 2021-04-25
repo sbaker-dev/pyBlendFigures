@@ -14,11 +14,8 @@ import sys
 class Manhattan:
     def __init__(self, args):
         write_directory, write_name, summary_path, chromosome_selection, chromosome_headers, snp_header, \
-            base_position_header, p_value_header, camera_position, camera_scale, positions = args
-
-        # todo we also need to have some axises produced for the render
-
-        self.write_directory = write_directory
+            base_position_header, p_value_header, camera_position, camera_scale, positions, x_axis_width, axis_colour,\
+            line_density, axis_width, bound, significance, significance_colour, x_resolution, y_resolution = args
 
         # Setup the blend file
         self.configure_blend(convert_colour(camera_position), float(camera_scale))
@@ -37,8 +34,6 @@ class Manhattan:
             chromosome_headers, snp_header, base_position_header, p_value_header)
         self.header_indexes = [self.chr_h, self.snp_h, self.bp_h, self.p_h]
 
-        self.logger.write_to_log(chromosome_selection)
-
         # Evaluate the lists and, if it has been set, the positions within the file.
         chromosome_selection = json.loads(chromosome_selection)
         if not ast.literal_eval(positions):
@@ -51,6 +46,10 @@ class Manhattan:
         # For each group, render the frames
         for index, chromosome_group in enumerate(chromosome_selection):
             self.make_manhattan(index, chromosome_group)
+
+        # Make the axis render
+        self._make_axis(float(x_axis_width), tuple_convert(axis_colour), int(line_density), float(axis_width),
+                        float(bound), float(significance), tuple_convert(significance_colour))
 
     @staticmethod
     def configure_blend(camera_position, camera_scale):
@@ -173,6 +172,7 @@ class Manhattan:
             y_positions = [-math.log(r[3]) for r in line_array]
             self.axis_y_positions.append(max(y_positions))
 
+            # Plot the vertexes to the graph
             vertexes = [(x + (chromosome - 1), y, 0) for x, y in zip(x_positions, y_positions)]
 
             # Make the block
@@ -206,6 +206,38 @@ class Manhattan:
                 else:
                     line_array.append([str(line[0]), int(line[1]), int(line[2]), float(line[3])])
         return line_array
+
+    def _make_axis(self, x_axis_width, axis_colour, line_density, axis_width, bound, significance, significance_colour):
+        # Set the axis y height as the max of axis_y_positions with ceiling to prevent out of bounds points
+        axis_height = math.ceil(max(self.axis_y_positions))
+
+        # Make the graphs axis
+        make_graph_axis(axis_colour, x_axis_width, axis_height, axis_width, bound)
+
+        # make the horizontal dashed line to determine the level of significance
+        make_horizontal_dashed_line("Line", significance_colour, x_axis_width, 0, significance, line_density)
+
+        # Label the axis
+        make_text("Chromosomes", x_axis_width / 2, -(axis_width + 1.2), "Chromosomes", 1, axis_colour, "CENTER")
+        make_text("Log", -axis_width - 1.2, significance, "-log10(pvalue)", 1, axis_colour, "CENTER")
+
+        # Y axis needs to be rotated
+        obj = bpy.data.objects["Log"]
+        obj.select_set(True)
+        bpy.ops.transform.rotate(value=1.5708, orient_axis='Z', orient_type='GLOBAL',
+                                 orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL',
+                                 constraint_axis=(False, False, True), mirror=True, use_proportional_edit=False,
+                                 proportional_edit_falloff='SMOOTH', proportional_size=1,
+                                 use_proportional_connected=False, use_proportional_projected=False)
+
+        # Render the scene
+        bpy.context.scene.render.filepath = str(Path(self.write_directory, f"{self.write_name}_AXIS.png").absolute())
+        bpy.context.scene.eevee.use_gtao = True
+        bpy.context.scene.render.film_transparent = True
+        bpy.ops.render.render(write_still=True)
+
+        # Save the blend file for manual manipulation later
+        bpy.ops.wm.save_as_mainfile(filepath=f"{self.write_directory}/{self.write_name}_AXIS.blend")
 
 
 if __name__ == '__main__':
