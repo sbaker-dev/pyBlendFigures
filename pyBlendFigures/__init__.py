@@ -1,1 +1,1 @@
-from .Supporting import BlendFigure
+from .Controller import BlendFigure

@@ -1,4 +1,6 @@
-from miscSupports import validate_path
+from pyBlendFigures.figure_logic.manhattan_plot import create_manhattan_plot
+
+from miscSupports import validate_path, directory_iterator
 from pathlib import Path
 import subprocess
 
@@ -178,6 +180,16 @@ class BlendFigure:
         """
         subprocess.Popen([self._blend_path, self._base_file, "--python",
                           str(Path(self._blend_scripts, "Manhattan.py")), self._prepare_args(locals())])
+
+    def manhattan_plot(self, colours, output_directory):
+        unique_names = list(set([file.split("__")[0] for file in directory_iterator(self._working_dir)
+                                 if ".log" not in file]))
+
+        for name in unique_names:
+            create_manhattan_plot(name, self._working_dir, colours, output_directory)
+
+
+
 
     def _prepare_args(self, local_args):
         """
