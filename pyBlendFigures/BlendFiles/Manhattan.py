@@ -258,7 +258,7 @@ class Manhattan:
         bpy.ops.render.render(write_still=True)
 
         # Save the blend file for manual manipulation later
-        bpy.ops.wm.save_as_mainfile(filepath=f"{self.write_directory}/{self.write_name}_AXIS.blend")
+        bpy.ops.wm.save_as_mainfile(filepath=f"{self.write_directory}/{self.write_name}__AXIS.blend")
 
 
 if __name__ == '__main__':
