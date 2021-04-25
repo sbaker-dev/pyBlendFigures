@@ -1,4 +1,4 @@
-from pyBlendFigures.figure_logic.manhattan_plot import create_manhattan_plot
+from pyBlendFigures.FigureLogic.manhattan_plot import create_manhattan_plot
 
 from miscSupports import validate_path, directory_iterator
 from pathlib import Path
@@ -182,14 +182,28 @@ class BlendFigure:
                           str(Path(self._blend_scripts, "Manhattan.py")), self._prepare_args(locals())])
 
     def manhattan_plot(self, colours, output_directory):
+        """
+        This will take the images in the working directory from manhattan_points and compile them into the images
+
+        :param colours: A list of 0-255 BGR colours, must be of equal length to the chromosome subdivision
+        :type colours: list[(int, int, int)]
+
+        :param output_directory: Where you want to save the images, it is STRONGLY recommend you put this somewhere
+            else as if you re-run the script and place the output in the working_directory it may raise index errors
+            for missing AXIS files for the output images
+        :type output_directory: str | Path
+
+        :return: Nothing, compile images then stop
+        :rtype: None
+        """
+
+        # Isolate the unique image names
         unique_names = list(set([file.split("__")[0] for file in directory_iterator(self._working_dir)
                                  if ".log" not in file]))
 
+        # For each plot, compile the images
         for name in unique_names:
             create_manhattan_plot(name, self._working_dir, colours, output_directory)
-
-
-
 
     def _prepare_args(self, local_args):
         """
