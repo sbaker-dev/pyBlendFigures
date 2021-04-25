@@ -1,4 +1,5 @@
-from pyBlendFigures.FigureLogic.manhattan_plot import create_manhattan_plot
+from pyBlendFigures.FigureLogic import *
+
 
 from miscSupports import validate_path, directory_iterator
 from pathlib import Path
@@ -79,7 +80,7 @@ class BlendFigure:
         subprocess.Popen([self._blend_path, "-b", self._base_file, "--python",
                           str(Path(self._blend_scripts, "ForestPlot.py")), self._prepare_args(locals())])
 
-    def heat_map_frames(self, points_path, days_length, date_index, point_radius, point_colour, camera_z=10):
+    def heat_map_raw_frames(self, points_path, days_length, date_index, point_radius, point_colour, camera_z=10):
         """
         This will generate the frames you need for the heat map
 
@@ -98,6 +99,32 @@ class BlendFigure:
 
         subprocess.Popen([self._blend_path, "-b", self._base_file, "--python",
                           str(Path(self._blend_scripts, "HeatMap.py")), self._prepare_args(locals())])
+
+    def heat_map_gradient_frames(self, point_colour, point_out_directory, gradient_out_directory, gradient_scalar=1.2,
+                                 gradient_divider=2):
+        """
+        Create the heat map frames from the raw's
+
+        :param point_colour: BGR Colour of the points in the .blend
+        :type point_colour: (int, int, int)
+
+        :param point_out_directory: Write directory for the point frames
+        :type point_out_directory: str | Path
+
+        :param gradient_out_directory: Write directory for the graident frames
+        :type gradient_out_directory: str | Path
+
+        :param gradient_scalar: multiplier of the current base images values on frame iteration
+        :type gradient_scalar: float
+
+        :param gradient_divider: Divider of the current totals (after multiplication) on frame interation
+        :type gradient_divider: float
+
+        :return: Nothing, write the frames then stop
+        :rtype: None
+        """
+        create_heat_map_frames(self._working_dir, point_colour, point_out_directory, gradient_out_directory,
+                               gradient_scalar, gradient_divider)
 
     def manhattan_points(self, write_name, gwas_output_path, chromosome_groups, chromosome_headers="CHR",
                          snp_header="SNP", base_position_header="BP", p_value_header="P", camera_position=(12, 9, 55),
