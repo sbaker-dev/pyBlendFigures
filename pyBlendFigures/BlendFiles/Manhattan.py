@@ -232,7 +232,7 @@ class Manhattan:
         # Label the x axis
         make_text("Chromosomes", 23.5 / 2, axis_spacer*1.5, "Chromosomes", axis_width * 2, axis_colour, "CENTER")
         for i in range(23):
-            make_text(f"Chr{i}", i + 0.5, axis_spacer, f"{i}", axis_width * 2, axis_colour, "CENTER")
+            make_text(f"Chr{i}", i + 0.5, axis_spacer, f"{i + 1}", axis_width * 2, axis_colour, "CENTER")
 
         # Label the y axis
         make_text("Log", axis_spacer * 1.5, axis_height / 2, "-log10(pvalue)", axis_width * 2, axis_colour, "CENTER")
