@@ -77,6 +77,108 @@ class BlendFigure:
         subprocess.Popen([self._blend_path, "-b", self._base_file, "--python",
                           str(Path(self._blend_scripts, "ForestPlot.py")), self._prepare_args(locals())])
 
+    def heat_map_frames(self, points_path, days_length, date_index, point_radius, point_colour, camera_z=10):
+        """
+        This will generate the frames you need for the heat map
+
+        Note
+        -----
+        Your points list shapefile must contain dates as day/month/year so that it can be delimited by "/"
+
+        :param camera_z:
+        :param date_index:
+        :param points_path:
+        :param days_length:
+        :param point_radius:
+        :param point_colour:
+        :return:
+        """
+
+        subprocess.Popen([self._blend_path, "-b", self._base_file, "--python",
+                          str(Path(self._blend_scripts, "HeatMap.py")), self._prepare_args(locals())])
+
+    def manhattan_points(self, write_name, gwas_output_path, chromosome_groups, chromosome_headers="CHR",
+                         snp_header="SNP", base_position_header="BP", p_value_header="P", camera_position=(12, 9, 55),
+                         camera_scale=40, chromosome_positions=None, x_axis_width=23.5, axis_colour="Dark_Grey",
+                         line_density=80, axis_width=0.2, bound=0.2, significance=8, significance_colour=(0, 0, 1, 1),
+                         x_resolution=1920, y_resolution=1080):
+        """
+        This will create the points for a manhattan plot
+
+        Note
+        -----
+        This can take a while, check the file_name.log in the directory you assigned for details on the progress
+
+        This cannot be done purely in the background via the -b subprocessor as opengl requires the window to be
+        initialised. As such this will create a blender instance window.
+
+        Source: https://blender.stackexchange.com/questions/2573/render-with-opengl-from-the-command-line
+
+        :param write_name: The name you want the files to use
+        :type write_name: str
+
+        :param gwas_output_path: Path to the gwas summary statistics
+        :type gwas_output_path: Path | str
+
+        :param chromosome_groups: Groups of chromosomes for colours, for example [[1, 3, ... 21, 23],
+            [2, 4, ... 20, 22]]
+        :type chromosome_groups: list[list[int]]
+
+        :param chromosome_headers: The header name of the chromosome column, defaults to CHR
+        :type chromosome_headers: str
+
+        :param snp_header: The header name of the snp column, defaults to SNP
+        :type snp_header: str
+
+        :param base_position_header: The header name of the base position column, defaults to BP
+        :type base_position_header: str
+
+        :param p_value_header: The header name of the p value column, defaults to P
+        :type p_value_header: str
+
+        :param camera_scale: scale of the orthographic camera, defaults to 40
+        :type camera_scale: float
+
+        :param camera_position: Position of the camera, defaults to (12, 10, 55)
+        :type camera_position: (int, int, int)
+
+        :param chromosome_positions: If you have prior knowledge of the poisitions of the chromosomes in the file in
+            terms of bytes, provide a dict of type {int(chromosome_number): byte start position}
+        :type chromosome_positions: dict
+
+        :param x_axis_width: X axis cut off, defaults to 23.5 for 23 chromosomes + some overhang
+        :type x_axis_width: float
+
+        :param axis_colour: The colour of the axis (see text_colour for options), defaults to "Dark_Grey"
+        :type axis_colour: str | list | tuple
+
+        :param line_density: How small you want the lines to be, defaults to 80 segments
+        :type line_density: int
+
+        :param axis_width: Width of the axis lines, defaults to 0.2
+        :type axis_width: float
+
+        :param bound: Padding between the axis and material of the graph, defaults to 0.2
+        :type bound: float
+
+        :param significance: Level of significance you want to plot a horizontal line, defaults to 8 for -log base ten
+            8.
+        :type significance: float
+
+        :param significance_colour: RGBA colour of the significance line
+        :type significance_colour: (float, float, float, float)
+
+        :param x_resolution: X dimension of image output, defaults to 1920
+        :type x_resolution: int
+
+        :param y_resolution: Y dimension of image output, defaults to 1080
+        :type y_resolution: int
+
+        :return: Nothing, process file then stop
+        """
+        subprocess.Popen([self._blend_path, self._base_file, "--python",
+                          str(Path(self._blend_scripts, "Manhattan.py")), self._prepare_args(locals())])
+
     def _prepare_args(self, local_args):
         """
         When a subprocess is called we need to convert the list of arguments to strings so we can pass them via
@@ -139,8 +241,3 @@ class BlendFigure:
         else:
             raise TypeError(
                 f"Expected a string, tuple, or list for colour yet found {type(colour)} for {colour}")
-
-
-
-
-
