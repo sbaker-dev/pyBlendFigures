@@ -1,6 +1,10 @@
 from blendSupports.Supports.collection_cleanup import collection_cleanup
 from blendSupports.Supports.blend_logging import BlendLogger
-from blendSupports.misc import convert_colour
+from blendSupports.Meshs.horizontal_dashed_line import make_horizontal_dashed_line
+from blendSupports.Meshs.graph_axis import make_graph_axis
+from blendSupports.Meshs.mesh_ref import make_mesh
+from blendSupports.Meshs.text import make_text
+from blendSupports.misc import tuple_convert
 
 from miscSupports import open_setter, decode_line, terminal_time, normalisation_min_max
 from pathlib import Path
@@ -18,7 +22,8 @@ class Manhattan:
             line_density, axis_width, bound, significance, significance_colour, x_resolution, y_resolution = args
 
         # Setup the blend file
-        self.configure_blend(convert_colour(camera_position), float(camera_scale))
+        self.configure_blend(tuple_convert(camera_position), float(camera_scale), int(x_resolution), int(y_resolution))
+        self.write_directory = write_directory
 
         # Set the summary file, and determine if its zipped or not
         self.summary_file = Path(summary_path)
@@ -52,7 +57,7 @@ class Manhattan:
                         float(bound), float(significance), tuple_convert(significance_colour))
 
     @staticmethod
-    def configure_blend(camera_position, camera_scale):
+    def configure_blend(camera_position, camera_scale, x_resolution, y_resolution):
         """Since we are using view port renders we need to disable must viewport features"""
         bpy.context.scene.render.film_transparent = True
         for area in bpy.context.screen.areas:
@@ -71,6 +76,10 @@ class Manhattan:
         camera = bpy.data.objects["Camera"]
         camera.location = camera_position
         camera.data.ortho_scale = camera_scale
+
+        # Set the render details
+        bpy.context.scene.render.resolution_x = x_resolution
+        bpy.context.scene.render.resolution_y = y_resolution
 
     def set_summary_headers(self, chromosome_header, snp_header, base_position_header, p_value_header):
         """
