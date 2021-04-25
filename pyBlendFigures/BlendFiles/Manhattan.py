@@ -226,9 +226,16 @@ class Manhattan:
         # make the horizontal dashed line to determine the level of significance
         make_horizontal_dashed_line("Line", significance_colour, x_axis_width, 0, significance, line_density)
 
-        # Label the axis
-        make_text("Chromosomes", x_axis_width / 2, -(axis_width + 1.2), "Chromosomes", 1, axis_colour, "CENTER")
-        make_text("Log", -axis_width - 1.2, significance, "-log10(pvalue)", 1, axis_colour, "CENTER")
+        # Make a spacer so that elements are relative distances to the axis
+        axis_spacer = -(axis_width + (axis_width * 2) + axis_width / 2)
+
+        # Label the x axis
+        make_text("Chromosomes", 23.5 / 2, axis_spacer*1.5, "Chromosomes", axis_width * 2, axis_colour, "CENTER")
+        for i in range(23):
+            make_text(f"Chr{i}", i + 0.5, axis_spacer, f"{i}", axis_width * 2, axis_colour, "CENTER")
+
+        # Label the y axis
+        make_text("Log", axis_spacer * 1.5, axis_height / 2, "-log10(pvalue)", axis_width * 2, axis_colour, "CENTER")
 
         # Y axis needs to be rotated
         obj = bpy.data.objects["Log"]
@@ -238,6 +245,11 @@ class Manhattan:
                                  constraint_axis=(False, False, True), mirror=True, use_proportional_edit=False,
                                  proportional_edit_falloff='SMOOTH', proportional_size=1,
                                  use_proportional_connected=False, use_proportional_projected=False)
+
+        # Add y axis values
+        for i in range(axis_height + 1):
+            if i % 2 == 0:
+                make_text(f"log{i}", axis_spacer, i, f"{i}", axis_width * 2, axis_colour, "CENTER")
 
         # Render the scene
         bpy.context.scene.render.filepath = str(Path(self.write_directory, f"{self.write_name}_AXIS.png").absolute())
