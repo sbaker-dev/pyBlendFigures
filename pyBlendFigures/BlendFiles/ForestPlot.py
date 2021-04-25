@@ -1,7 +1,7 @@
 from blendSupports.Nodes.emission_node import create_emission_node
-from blendSupports.misc import convert_colour, set_values
-from blendSupports.Meshs.make_text import make_text
-from blendSupports.Meshs.make_axis import make_axis
+from blendSupports.misc import tuple_convert, set_values
+from blendSupports.Meshs.mesh_ref import make_mesh
+from blendSupports.Meshs.text import make_text
 
 from miscSupports import normalisation_min_max, flatten, chunk_list
 from csvObject import CsvObject
@@ -24,14 +24,14 @@ class ForestPlot:
         self.height_iter = float(height_iter)
         self.coefficient_radius = float(coefficient_radius)
         self.rounder = int(rounder)
-        self.text_colour = convert_colour(text_colour)
+        self.text_colour = tuple_convert(text_colour)
         self.y_scale = float(y_scale)
         self.var_bound = float(var_bound)
         self.ci_bound = float(ci_bound)
         self.value_title = value_title
         self.axis_width = float(axis_width)
         self.axis_label = axis_label
-        self.axis_colour = convert_colour(axis_colour)
+        self.axis_colour = tuple_convert(axis_colour)
 
         # Isolate the row data and create normalised position data so we can construct the elements
         self.line_rows, self.axis_position = self._position_values()
@@ -115,7 +115,7 @@ class ForestPlot:
 
     def _create_axis(self):
         # Make y axis from the min and max values of the standardised rows
-        make_axis(self.axis_colour, self.height_max, 0, 1,  self.axis_position, self.axis_width)
+        self._make_axis()
         self.height_max -= self.height_iter
 
         # Label left an right most columns
@@ -135,6 +135,29 @@ class ForestPlot:
         # # Add the x axis label
         make_text("Axis Label", self.axis_position, self.height_max - self.height_iter, self.axis_label,
                   self.height_iter, self.text_colour, align="CENTER")
+
+    def _make_axis(self):
+
+        obj, mesh = make_mesh("Axis", self.axis_colour)
+
+        # 4 verts made with XYZ coords
+        verts = [
+            # Vertical axis
+            (self.axis_width / 2 + self.axis_position, 0, -self.axis_width),
+            (self.axis_width / 2 + self.axis_position, self.height_max, -self.axis_width),
+            (-self.axis_width / 2 + self.axis_position, self.height_max, -self.axis_width),
+            (-self.axis_width / 2 + self.axis_position, 0, -self.axis_width),
+
+            # Horizontal axis
+            (1, self.height_max, -self.axis_width),
+            (1, self.height_max - self.axis_width, -self.axis_width),
+            (0, self.height_max - self.axis_width, -self.axis_width),
+            (0, self.height_max, -self.axis_width)
+        ]
+        edges = []
+        faces = [[0, 1, 2, 3], [4, 5, 6, 7]]
+        mesh.from_pydata(verts, edges, faces)
+        bpy.ops.object.select_all(action='DESELECT')
 
 
 class ForestLine:
