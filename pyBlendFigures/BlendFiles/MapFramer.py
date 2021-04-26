@@ -1,6 +1,5 @@
 from blendSupports.Meshs.mesh_ref import make_mesh
 
-from miscSupports import flatten
 from shapely.geometry import MultiPolygon, Polygon
 from shapeObject import ShapeObject
 import bpy
@@ -25,53 +24,42 @@ class MapFrames:
                 print(f"{index} / {len(self.shape_obj.records)}")
 
             if isinstance(poly, MultiPolygon):
-                verts = []
-                faces = []
-                total_vert = 0
-
-                holes_list = []
 
                 # Multiple polygons have to have multiple polygons per mesh
-                for i, p in enumerate(poly):
-                    poly_verts = self._isolate_coords(p.exterior.coords.xy)
-                    verts.append(poly_verts)
+                multi_poly = [self._process_location(f"{rec[self.rec_index]}_{i}", p) for i, p in enumerate(poly)]
 
-                    poly_faces = [total_vert + i for i in range(len(poly_verts))]
-                    faces.append(poly_faces)
+                # Combine the meshes
+                for obj in multi_poly:
+                    obj.select_set(True)
+                bpy.ops.object.join()
 
-                    holes_list.append(p.interiors)
-
-                    total_vert = len(poly_verts)
-
-                # Make the object from the separate polygons into a single mesh
-                obj, mesh = make_mesh(str(rec[self.rec_index]))
-                mesh.from_pydata(flatten(verts), [], faces)
-                bpy.ops.object.select_all(action='DESELECT')
-
-                # Take the InteriorRingSequence(not the same as poly.interiors)
-                for i, hole in enumerate(holes_list):
-                    self._remove_hole(i, hole.__p__.exterior.coords, obj)
+                # Rename the mesh
+                for obj in bpy.context.selected_objects:
+                    obj.name = str(rec[0])
 
             elif isinstance(poly, Polygon):
-                obj, mesh = make_mesh(str(rec[self.rec_index]))
-                verts = self._isolate_coords(poly.exterior.coords.xy)
+                self._process_location(str(rec[self.rec_index]), poly)
 
-                mesh.from_pydata(verts, [], [[i for i in range(len(verts))]])
-                bpy.ops.object.select_all(action='DESELECT')
+    def _process_location(self, object_name, polygon):
+        obj, mesh = make_mesh(object_name)
+        verts = self._isolate_coords(polygon.exterior.coords.xy)
 
-                for i, hole in enumerate(poly.interiors):
-                    self._remove_hole(i, hole, obj)
+        mesh.from_pydata(verts, [], [[i for i in range(len(verts))]])
+        bpy.ops.object.select_all(action='DESELECT')
 
-    def _remove_hole(self, index, hole, mesh_obj):
+        for i, hole in enumerate(polygon.interiors):
+            self._remove_hole(i, hole, obj, verts)
+        return obj
 
+    def _remove_hole(self, index, hole, mesh_obj, mesh_verts):
         # Create a boolean mesh of the mesh_obj
         bpy.context.view_layer.objects.active = mesh_obj
         mesh_obj.select_set(True)
         bpy.ops.object.modifier_add(type='BOOLEAN')
         bpy.ops.object.select_all(action='DESELECT')
 
-        # Create the hole mesh
-        hole_coords = self._isolate_coords(hole.xy, 200)
+        # Create the hole mesh, if the mesh would be broken by the boolean leaving the array then remove the vert
+        hole_coords = [(x, y, z) for x, y, z in self._isolate_coords(hole.xy, 200) if (x, y, 0) not in mesh_verts]
         hole_obj, hole_mesh = make_mesh(f"Hole_{index}")
         hole_mesh.from_pydata(hole_coords, [], [[i for i in range(len(hole_coords))]])
 
