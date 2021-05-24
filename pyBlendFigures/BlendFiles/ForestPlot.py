@@ -17,7 +17,7 @@ class ForestPlot:
     def __init__(self, args):
         write_directory, csv_path, image_name, height_iter, coefficient_radius, value_title, var_bound, ci_bound, \
             rounder, text_colour, axis_width, axis_label, axis_colour, y_scale, x_resolution, y_resolution, \
-            image_type, camera_scale = args
+            image_type, camera_scale, camera_position = args
 
         # Convert and create attributes for values where required
         self.csv_path = csv_path
@@ -47,7 +47,11 @@ class ForestPlot:
         # Set the output resolution and camera scale
         bpy.context.scene.render.resolution_x = int(x_resolution)
         bpy.context.scene.render.resolution_y = int(y_resolution)
-        bpy.data.objects["Camera"].data.ortho_scale = float(camera_scale)
+
+        # Set the camera position and scale
+        camera = bpy.data.objects["Camera"]
+        camera.location = tuple_convert(camera_position)
+        camera.data.ortho_scale = float(camera_scale)
 
         # Render the scene
         bpy.context.scene.render.filepath = str(Path(write_directory, f"{image_name}.{image_type}").absolute())
