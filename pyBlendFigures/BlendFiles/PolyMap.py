@@ -16,6 +16,7 @@ class PolyMap:
 
         # Create Map
         self.make_shapefile_places()
+        bpy.ops.wm.save_as_mainfile(filepath=f"{write_directory}/MapShp.blend")
 
     def make_shapefile_places(self):
         """
