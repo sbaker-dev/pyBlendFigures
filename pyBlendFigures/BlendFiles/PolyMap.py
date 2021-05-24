@@ -2,21 +2,28 @@ from blendSupports.Meshs.mesh_ref import make_mesh
 
 from shapely.geometry import MultiPolygon, Polygon
 from shapeObject import ShapeObject
+import sys
 import bpy
 
 
-class MapFrames:
-    def __init__(self):
+class PolyMap:
+    def __init__(self, args):
 
-        shape_path = r"I:\Work\Shapefiles\Districts\EW1951_lgdistricts\EW1951_lgdistricts.shp"
-        rec_index = 0
-
+        # Set attributes
+        shape_path, rec_index, write_directory = args
         self.shape_obj = ShapeObject(shape_path)
         self.rec_index = rec_index
 
+        # Create Map
         self.make_shapefile_places()
 
     def make_shapefile_places(self):
+        """
+        For each place in the shapefile make a mesh element of name records[self.rec_index]
+
+        :return: Nothing, make each place then stop
+        :rtype: None
+        """
 
         for index, (rec, poly) in enumerate(zip(self.shape_obj.records, self.shape_obj.polygons)):
 
@@ -41,6 +48,18 @@ class MapFrames:
                 self._process_location(str(rec[self.rec_index]), poly)
 
     def _process_location(self, object_name, polygon):
+        """
+        Polygons have inner rings, and may be made of multiple parts. This will create a mesh of each part within this
+        object and cut out holes where required.
+
+        :param object_name: Name of the object
+        :type object_name: str
+
+        :param polygon: A shapely polygon
+        :type polygon: Polygon
+
+        :return: The mesh object reference data
+        """
         obj, mesh = make_mesh(object_name)
         verts = self._isolate_coords(polygon.exterior.coords.xy)
 
@@ -51,7 +70,22 @@ class MapFrames:
             self._remove_hole(i, hole, obj, verts)
         return obj
 
-    def _remove_hole(self, index, hole, mesh_obj, mesh_verts):
+    def _remove_hole(self, hole_index, hole, mesh_obj, mesh_verts):
+        """
+        Meshes may have holes in them which we need to remove via boolean operations
+
+        :param hole_index: The index of this hole
+        :type hole_index: int
+
+        :param hole: Shapely interior loop coordinates
+
+        :param mesh_obj: The mesh object reference we wish to remove holes from
+
+        :param mesh_verts: vertexs of the exterior of the mesh object reference
+
+        :return: Nothing, remove holes then stop
+        :rtype: None
+        """
         # Create a boolean mesh of the mesh_obj
         bpy.context.view_layer.objects.active = mesh_obj
         mesh_obj.select_set(True)
@@ -60,7 +94,7 @@ class MapFrames:
 
         # Create the hole mesh, if the mesh would be broken by the boolean leaving the array then remove the vert
         hole_coords = [(x, y, z) for x, y, z in self._isolate_coords(hole.xy, 200) if (x, y, 0) not in mesh_verts]
-        hole_obj, hole_mesh = make_mesh(f"Hole_{index}")
+        hole_obj, hole_mesh = make_mesh(f"Hole_{hole_index}")
         hole_mesh.from_pydata(hole_coords, [], [[i for i in range(len(hole_coords))]])
 
         # Extrude the hole downwards so that we can create a boolean
@@ -92,10 +126,12 @@ class MapFrames:
 
     @staticmethod
     def _isolate_coords(polygon, z=0):
+        """Isolate the x and y positions of a given polygon then convert into a 3D Vector"""
         x_list = [x for x in polygon[0]]
         y_list = [y for y in polygon[1]]
 
         return [(x, y, z) for x, y in zip(x_list, y_list)]
 
 
-MapFrames()
+if __name__ == '__main__':
+    PolyMap(sys.argv[len(sys.argv) - 1].split("__"))
