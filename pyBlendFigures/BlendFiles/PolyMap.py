@@ -10,9 +10,9 @@ class PolyMap:
     def __init__(self, args):
 
         # Set attributes
-        shape_path, rec_index, write_directory = args
+        write_directory, shape_path, rec_index = args
         self.shape_obj = ShapeObject(shape_path)
-        self.rec_index = rec_index
+        self.rec_index = int(rec_index)
 
         # Create Map
         self.make_shapefile_places()

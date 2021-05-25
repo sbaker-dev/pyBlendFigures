@@ -1,9 +1,10 @@
 from pyBlendFigures.FigureLogic import *
 
-
 from miscSupports import validate_path, directory_iterator
 from pathlib import Path
 import subprocess
+import time
+import os
 
 
 class BlendFigure:
@@ -234,6 +235,23 @@ class BlendFigure:
         # For each plot, compile the images
         for name in unique_names:
             create_manhattan_plot(name, self._working_dir, colours, output_directory)
+
+    def map_plot(self, shapefile, record_index, write_directory, data_path):
+
+        args_map = ["shapefile", "record_index"]
+        map_args = {arg: value for arg, value in locals().items() if arg in args_map}
+        args_data = {arg: value for arg, value in locals().items() if arg not in args_map}
+
+        subprocess.Popen([self._blend_path, self._base_file, "--python",
+                          str(Path(self._blend_scripts, "PolyMap.py")), self._prepare_args(map_args)])
+
+        while not os.path.exists(Path(self._working_dir, "MapShp.blend")):
+            time.sleep(5)
+
+        print(f"Found {Path(self._working_dir, 'MapShp.blend')}")
+
+        # subprocess.Popen([self._blend_path, "-b", self._base_file, "--python",
+        #                   str(Path(self._blend_scripts, "ForestPlot.py")), self._prepare_args(locals())])
 
     def _prepare_args(self, local_args):
         """
