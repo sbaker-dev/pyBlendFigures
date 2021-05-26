@@ -66,11 +66,32 @@ class CreateFrames:
 
 
 root = r"I:\Work\DataBases\Adjacent\Months"
-file_list = chunk_list(directory_iterator(root), int(len(directory_iterator(root)) / 5))
 
-for file in file_list[0]:
+not_processed = []
+for file in directory_iterator(root):
     print(file)
 
+    a = CsvObject(Path(root, file))
+
+    target = len(a.headers) - 2
+
+    found = 0
+    for img in directory_iterator(r"I:\Work\Figures_and_tables\DiseasesOverTime"):
+        year = img.split("_")[-1].split(".")[0]
+
+        if year == Path(root, file).stem:
+            found += 1
+
+    if found != target:
+        not_processed.append(file)
+
+print(not_processed)
+print(len(not_processed))
+
+
+file_list = chunk_list(not_processed, int(len(not_processed) / 4))
+for file in file_list[0]:
+    print(file)
     CreateFrames([Path(root, file),
                   r"I:\Work\Figures_and_tables\DiseasesOverTime",
                   2, 0])
