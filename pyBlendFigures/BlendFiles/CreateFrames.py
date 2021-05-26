@@ -57,10 +57,6 @@ class CreateFrames:
         bpy.context.view_layer.objects.active = ob
         ob.select_set(True)
 
-        # Make the District the active object
-        bpy.context.view_layer.objects.active = ob
-        ob.select_set(True)
-
         for mat in ob.material_slots:
             mat.material.node_tree.nodes["Emission"].inputs[0].default_value = colour
 
