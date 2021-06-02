@@ -1,4 +1,4 @@
-from miscSupports import write_yaml
+from miscSupports import write_yaml, flatten
 from pathlib import Path
 import textwrap
 
@@ -27,9 +27,10 @@ class Prisma:
         """
 
         # Split the text on line width, then add in custom breaks
-        text_list = textwrap.wrap(box_text, self.line_width, replace_whitespace=False)
+        text_list = [textwrap.wrap(text, self.line_width) for text in box_text.split("\n")]
+        text_list = flatten([text if len(text) > 0 else [""] for text in text_list])
 
-        # Create new lines at the end of each element in the list then add this to the plot dict
+        # Create new lines at the end of each element, bar the last element, in the list then add this to the plot dict
         out_text = "".join([f"{text}\n" if i != len(text_list) - 1 else text for i, text in enumerate(text_list)])
         self.plot_dict[f"{column}-{row}"] = {"Text": out_text, "Col": column, "Row": row}
 
