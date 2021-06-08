@@ -15,6 +15,9 @@ class BlendFigure:
         self._blend_scripts = Path(Path(__file__).parent.parent, "BlendFiles").absolute()
         self._working_dir = str(validate_path(working_directory).absolute())
 
+        # Todo: Potential make this information, along side the above and the colour data a separate class
+        # TODO: Extract the camera and resolution options from plots as a common attribute
+
     def forest_plot(self, csv_path, image_name, height_iteration, coefficient_radius, value_title,
                     variable_bound=1.0, ci_bound=0.1, rounder=3, text_colour="Black", axis_width=0.005,
                     axis_label="X_Axis", axis_colour="Dark_Grey", y_scale=0.1, x_resolution=1080,
@@ -238,6 +241,8 @@ class BlendFigure:
 
     def map_plot(self, shapefile, record_index, write_directory, data_path):
 
+        # todo: Make this a seperate call method
+
         args_map = ["shapefile", "record_index"]
         map_args = {arg: value for arg, value in locals().items() if arg in args_map}
         args_data = {arg: value for arg, value in locals().items() if arg not in args_map}
@@ -252,6 +257,14 @@ class BlendFigure:
 
         # subprocess.Popen([self._blend_path, "-b", self._base_file, "--python",
         #                   str(Path(self._blend_scripts, "ForestPlot.py")), self._prepare_args(locals())])
+
+    def map_frame_animation(self):
+        raise NotImplementedError("Sorry, not yet implemented")
+
+    def prisma_plot(self, prisma_config_path):
+
+        subprocess.Popen([self._blend_path, "-b", self._base_file, "--python",
+                          str(Path(self._blend_scripts, "PrismaPlot.py")), self._prepare_args(locals())])
 
     def _prepare_args(self, local_args):
         """
