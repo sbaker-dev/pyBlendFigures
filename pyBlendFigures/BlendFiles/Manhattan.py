@@ -1,12 +1,11 @@
 from blendSupports.Supports.collection_cleanup import collection_cleanup
-from blendSupports.Supports.blend_logging import BlendLogger
 from blendSupports.Meshs.horizontal_dashed_line import make_horizontal_dashed_line
 from blendSupports.Meshs.graph_axis import make_graph_axis
 from blendSupports.Meshs.mesh_ref import make_mesh
 from blendSupports.Meshs.text import make_text
 from blendSupports.misc import tuple_convert
 
-from miscSupports import open_setter, decode_line, terminal_time, normalisation_min_max
+from miscSupports import open_setter, decode_line, terminal_time, normalisation_min_max, FileOut
 from pathlib import Path
 import json
 import math
@@ -31,8 +30,8 @@ class Manhattan:
 
         # If the file is zipped it will have .txt.gz/zip/something, this isolates the actual name regardless of zips
         self.write_name = write_name
-        self.logger = BlendLogger(self.write_directory, f"{self.write_name}.log")
-        self.logger.write_to_log(f"Starting {self.summary_file.stem}: {terminal_time()}\n")
+        self.logger = FileOut(self.write_directory, f"{self.write_name}", "log", True)
+        self.logger.write(f"Starting {self.summary_file.stem}: {terminal_time()}\n")
 
         # Set the headers
         self.chr_h, self.snp_h, self.bp_h, self.p_h = self.set_summary_headers(
@@ -129,7 +128,7 @@ class Manhattan:
         """
 
         last_position = 0
-        self.logger.write_to_log(f"No positions found so creating them: {terminal_time()}")
+        self.logger.write(f"No positions found so creating them: {terminal_time()}")
 
         chromosome_positions = {1: 0}
         for chromosome in range(1, 23):
@@ -143,8 +142,8 @@ class Manhattan:
                     if int(line[self.chr_h]) > chromosome:
                         last_position = file.tell() - len(line_byte)
                         chromosome_positions[chromosome + 1] = last_position
-                        self.logger.write_to_log(f"Determined log position of {chromosome}: {terminal_time()}")
-                        self.logger.write_to_log(chromosome_positions)
+                        self.logger.write(f"Determined log position of {chromosome}: {terminal_time()}")
+                        self.logger.write(chromosome_positions)
                         break
 
                 file.close()
@@ -168,8 +167,7 @@ class Manhattan:
     def make_manhattan(self, index, chromosome_group):
 
         for chromosome in chromosome_group:
-            self.logger.write_to_log(f"Starting {chromosome}: {terminal_time()}")
-            print(chromosome)
+            self.logger.write(f"Starting {chromosome}: {terminal_time()}")
 
             # Isolate the values from the file
             line_array = self.isolate_line_array(chromosome)
@@ -194,7 +192,7 @@ class Manhattan:
         bpy.ops.wm.save_as_mainfile(filepath=f"{self.write_directory}/{self.write_name}__{index}.blend")
         bpy.ops.render.opengl(write_still=True, view_context=True)
         collection_cleanup("Collection")
-        self.logger.write_to_log(f"Finished group {index} at {terminal_time()}")
+        self.logger.write(f"Finished group {index} at {terminal_time()}")
 
     def isolate_line_array(self, chromosome):
         line_array = []
