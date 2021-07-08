@@ -116,9 +116,6 @@ class QQPlot:
                     p_value = -math.log(p_value)
                 log_v.append(p_value)
 
-                if index == 100000:
-                    break
-
         # Sort the values from smallest to largest
         return sorted(log_v)
 
