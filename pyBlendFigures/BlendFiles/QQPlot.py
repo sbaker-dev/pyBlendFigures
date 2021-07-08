@@ -1,6 +1,7 @@
 from blendSupports.Meshs.graph_axis import make_graph_axis
 from blendSupports.Meshs.mesh_ref import make_mesh
 from blendSupports.Meshs.text import make_text
+from blendSupports.misc import tuple_convert
 
 from miscSupports import open_setter, decode_line, terminal_time, FileOut
 from pathlib import Path
@@ -13,23 +14,12 @@ import bpy
 class QQPlot:
     def __init__(self, args):
 
-        self._args = args
+        write_directory, summary_file, p_value_index, write_name, log_transform, set_bounds, line_width, axis_colour, \
+            camera_position, camera_scale, x_res, y_res = args
 
-        summary_file = r"Y:\data\ukbiobank\software\gwas_pipeline\dev\release_candidate\data\phenotypes\ow18390\output\Scarlet_10\30378a04-f6e9-43c0-b02a-be4953311552\Scarlet_10_imputed.txt.gz"
-        write_directory = r"C:\Users\Samuel\PycharmProjects\pyBlendFigures\TestV2\QQ"
-        write_name = "Test"
-        p_value_index = 13
-        log_transform = True
-
-        self.configure_blend((10, 10, 30), 25, 1080, 1080)
-
-        set_bounds = None
-
-        line_width = 0.05
-        axis_colour = (0.025, 0.025, 0.025, 1)
-
+        # Setup the file for the process
+        self.configure_blend(tuple_convert(camera_position), float(camera_scale), int(x_res), int(y_res))
         self.write_directory = write_directory
-
         self.summary_file = Path(summary_file)
         self.zipped = self.summary_file.suffix == ".gz"
 
@@ -39,10 +29,12 @@ class QQPlot:
         self.logger.write(f"Starting {self.summary_file.stem}: {terminal_time()}\n")
 
         # Draw the QQ plot
-        x_values, y_values = self._draw_qq(p_value_index, log_transform)
+        x_values, y_values = self._draw_qq(int(p_value_index), bool(log_transform))
 
-        self._axis(x_values, y_values, set_bounds, line_width, axis_colour)
+        # Draw the Axis
+        self._axis(x_values, y_values, set_bounds, float(line_width), tuple_convert(axis_colour))
 
+    # todo Move the blendSupports, extract from both QQ and Manhattan
     @staticmethod
     def configure_blend(camera_position, camera_scale, x_resolution, y_resolution):
         """Since we are using view port renders we need to disable must viewport features"""
@@ -86,6 +78,7 @@ class QQPlot:
         bpy.context.scene.render.filepath = str(Path(self.write_directory, f"{self.write_name}").absolute())
         bpy.ops.wm.save_as_mainfile(filepath=f"{self.write_directory}/{self.write_name}.blend")
         bpy.ops.render.opengl(write_still=True, view_context=True)
+        self.logger.write(f"Written QQ Points at {terminal_time()}")
 
         # Return the bounds for the axis
         return x_values, y_values
@@ -133,7 +126,7 @@ class QQPlot:
 
         # Make the 45% line from the min of the max
         end_point = min([max(y_values), max(x_values)])
-        line, line_mesh = make_mesh(f"Line")
+        line, line_mesh = make_mesh("Line", axis_colour)
         line_mesh.from_pydata([(0, 0, 0), (end_point, end_point, 0)], [(0, 1)], [])
 
         # Turn line to curve, add width equal to line_width
@@ -147,8 +140,8 @@ class QQPlot:
         y_bound = max(y_values)
 
         # define the Bound of the axis
-        if set_bounds:
-            x, y = set_bounds
+        if set_bounds != "None":
+            x, y = tuple_convert(set_bounds)
             if (x_bound > x) or (y_bound > y):
                 x = max([x_bound, x])
                 y = max([y_bound, y])
@@ -159,6 +152,7 @@ class QQPlot:
         # Make the graphs axis
         make_graph_axis(axis_colour, x, y, line_width, 0.0)
 
+        # TODO see if we can generalise the axis for make graph axis to also include the annotation
         # Label the x axis
         make_text("Theoretical -log10", math.floor(x) / 2, -1, "Theoretical -log10", 0.5, axis_colour, "CENTER")
         for i in range(math.floor(x)):
@@ -180,6 +174,7 @@ class QQPlot:
             make_text(f"log{i}", -0.5, i + 0.5, f"{i + 1}", 0.5, axis_colour, "CENTER")
 
         # Render the scene
+        # TODO: Make a general method to call from blend supports, do the same for OPENGL
         bpy.context.scene.render.filepath = str(Path(self.write_directory, f"{self.write_name}__AXIS.png").absolute())
         bpy.context.scene.eevee.use_gtao = True
         bpy.context.scene.render.film_transparent = True
@@ -187,6 +182,7 @@ class QQPlot:
 
         # Save the blend file for manual manipulation later
         bpy.ops.wm.save_as_mainfile(filepath=f"{self.write_directory}/{self.write_name}__AXIS.blend")
+        self.logger.write(f"Written the AXIS out at {terminal_time()}")
 
 
 if __name__ == '__main__':
