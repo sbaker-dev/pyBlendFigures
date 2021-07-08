@@ -75,8 +75,8 @@ class QQPlot:
         mesh.from_pydata(vertexes, [], [])
 
         # Render the QQ points
-        bpy.context.scene.render.filepath = str(Path(self.write_directory, f"{self.write_name}").absolute())
-        bpy.ops.wm.save_as_mainfile(filepath=f"{self.write_directory}/{self.write_name}.blend")
+        bpy.context.scene.render.filepath = str(Path(self.write_directory, f"{self.write_name}__POINTS").absolute())
+        bpy.ops.wm.save_as_mainfile(filepath=f"{self.write_directory}/{self.write_name}__POINTS.blend")
         bpy.ops.render.opengl(write_still=True, view_context=True)
         self.logger.write(f"Written QQ Points at {terminal_time()}")
 
