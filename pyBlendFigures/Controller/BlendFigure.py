@@ -211,6 +211,7 @@ class BlendFigure:
         :type y_resolution: int
 
         :return: Nothing, process file then stop
+        :rtype: None
         """
         subprocess.Popen([self._blend_path, self._base_file, "--python",
                           str(Path(self._blend_scripts, "Manhattan.py")), self._prepare_args(locals())])
@@ -238,6 +239,54 @@ class BlendFigure:
         # For each plot, compile the images
         for name in unique_names:
             create_manhattan_plot(name, self._working_dir, colours, output_directory)
+
+    def qq_plot(self, summary_file, p_value_index, write_name, log_transform=True, set_bounds=None,
+                line_width=0.05, axis_colour="Dark_Grey", camera_position=(10, 10, 30), camera_scale=25,
+                x_resolution=1080, y_resolution=1080):
+
+        """
+        Create a QQ plot from summary statistics file
+
+        :param summary_file: Path to the gwas summary statistics
+        :type summary_file: str | Path
+
+        :param p_value_index: P value index of in the summary file
+        :type p_value_index: int
+
+        :param write_name: Name of the file
+        :type write_name: str
+
+        :param log_transform: Log transform p values, defaults to True
+        :type log_transform: bool
+
+        :param set_bounds: Tuple of x and y for bounds of x and y axis or None if you want to use the max of x and y
+            found within the graphy, defaults to None
+        :type set_bounds: None | tuple
+
+        :param line_width: Width of the axis lines, defaults to 0.05
+        :type line_width: float
+
+        :param axis_colour: The colour of the axis (see text_colour for options), defaults to "Dark_Grey"
+        :type axis_colour: str | list | tuple
+
+        :param camera_scale: scale of the orthographic camera, defaults to 40
+        :type camera_scale: float
+
+        :param camera_position: Position of the camera, defaults to (12, 10, 55)
+        :type camera_position: (int, int, int)
+
+        :param x_resolution: X dimension of image output, defaults to 1920
+        :type x_resolution: int
+
+        :param y_resolution: Y dimension of image output, defaults to 1080
+        :type y_resolution: int
+
+        :return: Nothing, process file then stop
+        :rtype: None
+        """
+
+        subprocess.Popen([self._blend_path, self._base_file, "--python",
+                          str(Path(self._blend_scripts, "QQPlot.py")), self._prepare_args(locals())])
 
     def map_plot(self, shapefile, record_index, write_directory, data_path):
 
