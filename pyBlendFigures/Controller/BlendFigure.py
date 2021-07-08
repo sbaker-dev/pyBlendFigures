@@ -288,6 +288,18 @@ class BlendFigure:
         subprocess.Popen([self._blend_path, self._base_file, "--python",
                           str(Path(self._blend_scripts, "QQPlot.py")), self._prepare_args(locals())])
 
+    def qq_make(self, point_colour, output_directory):
+        # Isolate the unique image names
+        unique_names = list(set([file.split("__")[0] for file in directory_iterator(self._working_dir)
+                                 if (".log" not in file) and (".blend" not in file)]))
+
+        print(unique_names)
+        # For each plot, compile the images
+        for name in unique_names:
+            create_qq_plot(name, self._working_dir, point_colour, output_directory)
+
+        return
+
     def map_plot(self, shapefile, record_index, write_directory, data_path):
 
         # todo: Make this a seperate call method
