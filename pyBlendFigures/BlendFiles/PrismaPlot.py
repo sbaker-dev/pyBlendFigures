@@ -1,8 +1,10 @@
-from blendSupports.Meshs.text import make_text
 from blendSupports.Supports.collection_cleanup import collection_cleanup
-
+from blendSupports.Meshs.mesh_ref import make_mesh
+from blendSupports.Meshs.text import make_text
 
 from miscSupports import load_yaml
+import bpy
+
 
 
 class PrismaPlot:
@@ -19,9 +21,6 @@ class PrismaPlot:
         self.widths, self.dimensions = self._set_dimensions()
         print(self.dimensions)
 
-        # TODO: Create each text element, get their dimensions with .dimension and store this rather than via _set_dimensions
-        # TODO: Then iterate though row by row placing each element in its place
-
         previous_height = 0
         for row_i in range(self.row_count):
             for col_i in range(self.col_count):
@@ -36,7 +35,25 @@ class PrismaPlot:
                         width += self.spacing
                     print(width)
 
-                    make_text(name, width, previous_height, position["Text"], 1, (255, 255, 255, 255), align="CENTER")
+                    obj = make_text(name, width, previous_height, position["Text"], 1, (255, 255, 255, 255),
+                                    align="CENTER")
+                    obj.select_set(True)
+                    bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='MEDIAN')
+
+                    x_d, y_d, _ = obj.dimensions / 2
+                    x, y, _ = obj.location / 2
+                    obj.select_set(False)
+
+                    vert_list = [(x - x_d, y + y_d, -0.1), (x - x_d, y - y_d, -0.1), (x + x_d, y - y_d, -0.1),
+                                 (x + x_d, y + y_d, -0.1)]
+
+                    box_obj, mesh = make_mesh(name, (255, 255, 255, 255))
+                    mesh.from_pydata(vert_list, [], [[0, 1, 2, 3]])
+
+                    box_obj.select_set(True)
+                    bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='MEDIAN')
+                    box_obj.location = obj.location
+
                     previous_height += self.dimensions[name][1]
                 except KeyError:
                     pass
