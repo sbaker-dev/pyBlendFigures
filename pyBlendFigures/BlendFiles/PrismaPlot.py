@@ -22,6 +22,9 @@ class PrismaPlot:
         self.row_count = len(self.links["Rows"])
 
         self.widths, self.dimensions = self._set_dimensions()
+
+        self.box_locations = {}
+        self.box_names = {}
         print(self.dimensions)
 
         previous_height = 0
@@ -39,6 +42,30 @@ class PrismaPlot:
 
                 except KeyError:
                     pass
+
+        # todo Need to figure out how to do line spacing
+        # print("\n")
+        # column_keys = [key for key in self.box_locations if key.split("-")[0] == "0"]
+        #
+        # for i, key in enumerate(column_keys):
+        #     if i > 0:
+        #         print(key)
+        #         past = bpy.data.objects[self.box_names[f"{column_keys[i - 1]}_box"]]
+        #         past_vert = [(past.matrix_world @ v.co) for v in past.data.vertices]
+        #         top_y = min([y for x, y, z in past_vert])
+        #
+        #         pres = bpy.data.objects[self.box_names[f"{key}_box"]]
+        #         pres_vert = [(past.matrix_world @ v.co) for v in pres.data.vertices]
+        #         bot_y = max(y for x, y, z in pres_vert)
+        #         print(top_y, bot_y)
+        #
+        #         for a in past_vert:
+        #             print(a)
+        #
+        #         for b in pres_vert:
+        #             print(b)
+        #
+        #         break
 
     def _set_dimensions(self):
 
@@ -87,8 +114,9 @@ class PrismaPlot:
                      ((x - x_d) - self.line_width, (y - y_d) - self.line_width, -0.1),
                      ((x + x_d) + self.line_width, (y - y_d) - self.line_width, -0.1),
                      ((x + x_d) + self.line_width, (y + y_d) + self.line_width, -0.1)]
-        box_obj, mesh = make_mesh(name, (255, 255, 255, 255))
+        box_obj, mesh = make_mesh(f"{name}_box", (255, 255, 255, 255))
         mesh.from_pydata(vert_list, [], [[0, 1, 2, 3]])
+        self.box_names[f"{name}_box"] = box_obj.name
 
         # Set the boxes origin to geometry
         box_obj.select_set(True)
@@ -106,6 +134,9 @@ class PrismaPlot:
         bpy.context.object.modifiers["Bevel"].segments = self.segments
         bpy.context.object.modifiers["Bevel"].profile = self.profile
         box_obj.select_set(False)
+
+        # Log the location for links
+        self.box_locations[name] = [vert_list]
 
 
 PrismaPlot()
