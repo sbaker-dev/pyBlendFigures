@@ -22,39 +22,24 @@ class PrismaPlot:
         # TODO: Create each text element, get their dimensions with .dimension and store this rather than via _set_dimensions
         # TODO: Then iterate though row by row placing each element in its place
 
-        # for row_i in range(self.row_count):
-        #     for i in range(self.col_count):
-        #         for name, position in self.positions.items():
-        #             print(name, position)
-        #         break
-        #     break
+        previous_height = 0
+        for row_i in range(self.row_count):
+            for col_i in range(self.col_count):
+                try:
 
+                    name = f"{col_i}-{row_i}"
+                    position = self.positions[name]
 
-        # for i in range(self.col_count):
-        #     previous_height = 0
-        #     row_adjustment = 0
-        #
-        #     x_positions = []
-        #     y_positions = []
-        #     for row_i in range(self.row_count):
-        #
-        #         for name, position in self.positions.items():
-        #             col_id, row_id = name.split("-")
-        #             if col_id == str(i) and row_id == str(row_i):
-        #                 make_text(name, i + row_adjustment, (-row_i - previous_height), position["Text"], 1,
-        #                           (255, 255, 255, 255), align="CENTER")
-        #                 previous_height += (len(position["Text"].split("\n")) + self.spacing)
-        #
-        #                 bpy.ops.object.select_all(action='DESELECT')
-        #                 obj = bpy.data.objects[name]
-        #                 obj.select_set(True)
-        #                 x_positions.append(obj.dimensions[0])
-        #                 y_positions.append(obj.dimensions[1])
-        #
-        #     print(x_positions)
-        #     print(y_positions)
-        #
-        #     print("")
+                    print(name)
+                    width = sum([self.widths[str(i - 1)] for i in range(col_i + 1)])
+                    if col_i != 0:
+                        width += self.spacing
+                    print(width)
+
+                    make_text(name, width, previous_height, position["Text"], 1, (255, 255, 255, 255), align="CENTER")
+                    previous_height += self.dimensions[name][1]
+                except KeyError:
+                    pass
 
     def _set_dimensions(self):
 
