@@ -15,6 +15,8 @@ class PrismaPlot:
         self.padding = 0.4
         self.segments = 5
         self.profile = 0.5
+        self.text_colour = (0, 0, 0, 1)
+        self.box_colour = (0, 0, 0, 1)
 
         self.links = self._args["Links"]
         self.positions = self._args["Positions"]
@@ -43,7 +45,7 @@ class PrismaPlot:
                 except KeyError:
                     pass
 
-        # todo Need to figure out how to do line spacing
+        # todo Need to figure out how to do line spacing, this just doesn't work
         # print("\n")
         # column_keys = [key for key in self.box_locations if key.split("-")[0] == "0"]
         #
@@ -78,7 +80,7 @@ class PrismaPlot:
 
                 col_id, row_id = name.split("-")
                 if col_id == str(i):
-                    obj = make_text(name, 0, 0, position["Text"], 1, (255, 255, 255, 255), align="CENTER")
+                    obj = make_text(name, 0, 0, position["Text"], 1, self.text_colour, align="CENTER")
                     dimensions.append(obj.dimensions)
 
                     x, y, z = obj.dimensions
@@ -96,7 +98,7 @@ class PrismaPlot:
             width += self.spacing
 
         # Create the text object and set its origin to geometry
-        obj = make_text(name, width, previous_height, position["Text"], 1, (255, 255, 255, 255),
+        obj = make_text(name, width, previous_height, position["Text"], 1, self.text_colour,
                         align="CENTER")
         obj.select_set(True)
         bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='MEDIAN')
@@ -114,7 +116,7 @@ class PrismaPlot:
                      ((x - x_d) - self.line_width, (y - y_d) - self.line_width, -0.1),
                      ((x + x_d) + self.line_width, (y - y_d) - self.line_width, -0.1),
                      ((x + x_d) + self.line_width, (y + y_d) + self.line_width, -0.1)]
-        box_obj, mesh = make_mesh(f"{name}_box", (255, 255, 255, 255))
+        box_obj, mesh = make_mesh(f"{name}_box", self.box_colour)
         mesh.from_pydata(vert_list, [], [[0, 1, 2, 3]])
         self.box_names[f"{name}_box"] = box_obj.name
 
