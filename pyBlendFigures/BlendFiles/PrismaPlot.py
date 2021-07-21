@@ -16,7 +16,7 @@ class PrismaPlot:
         self.col_count = len(self.links["Columns"])
         self.row_count = len(self.links["Rows"])
 
-        self.dimensions = self._set_dimensions()
+        self.widths, self.dimensions = self._set_dimensions()
         print(self.dimensions)
 
         # TODO: Create each text element, get their dimensions with .dimension and store this rather than via _set_dimensions
@@ -58,7 +58,8 @@ class PrismaPlot:
 
     def _set_dimensions(self):
 
-        widths = {}
+        widths = {"-1": 0}
+        dimension_dict = {}
         for i in range(self.col_count):
             dimensions = []
 
@@ -69,13 +70,13 @@ class PrismaPlot:
                     obj = make_text(name, 0, 0, position["Text"], 1, (255, 255, 255, 255), align="CENTER")
                     dimensions.append(obj.dimensions)
 
+                    x, y, z = obj.dimensions
+                    dimension_dict[name] = [x, y, z]
+
             widths[str(i)] = max([x for x, y, z in dimensions])
 
         collection_cleanup("Collection")
-        return widths
-# col_heights.append([name, len(text_split)])
+        return widths, dimension_dict
 
-
-#
 
 PrismaPlot()
