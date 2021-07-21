@@ -75,7 +75,7 @@ class PrismaPlot:
                     bpy.context.object.modifiers["Bevel"].profile = self.profile
                     box_obj.select_set(False)
 
-                    previous_height += self.dimensions[name][1]
+                    previous_height -= self.dimensions[name][1]
                 except KeyError:
                     pass
 
