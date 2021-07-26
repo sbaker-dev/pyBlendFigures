@@ -1,22 +1,30 @@
 from blendSupports.Supports.collection_cleanup import collection_cleanup
 from blendSupports.Meshs.mesh_ref import make_mesh
 from blendSupports.Meshs.text import make_text
+from blendSupports.misc import tuple_convert
 
 from miscSupports import load_yaml, chunk_list, flatten
+from pathlib import Path
+import sys
 import bpy
 
 
+# todo Docstrings
 class PrismaPlot:
-    def __init__(self):
-        self._args = load_yaml(r"C:\Users\Samuel\PycharmProjects\pyBlendFigures\TestV2\PRISMA\Test3.yaml")
+    def __init__(self, args):
 
-        self.spacing = 1
-        self.line_width = 0.2
-        self.padding = 0.4
-        self.segments = 5
-        self.profile = 0.5
-        self.text_colour = (0, 0, 0, 1)
-        self.box_colour = (0, 0, 0, 1)
+        write_directory, write_name, prisma_yaml, spacing, line_width, padding, bevel_segments, bevel_profile, \
+            text_colour, box_colour, x_resolution, y_resolution, camera_scale, camera_position = args
+
+        self._args = load_yaml(prisma_yaml)
+
+        self.spacing = int(spacing)
+        self.line_width = float(line_width)
+        self.padding = float(padding)
+        self.bevel_segments = int(bevel_segments)
+        self.bevel_profile = float(bevel_profile)
+        self.text_colour = tuple_convert(text_colour)
+        self.box_colour = tuple_convert(box_colour)
 
         self.links = self._args["Links"]
         self.positions = self._args["Positions"]
@@ -32,6 +40,25 @@ class PrismaPlot:
         # Create the center line and the links to the center line from the sides
         self._create_center_line()
         self._create_links()
+
+        # TODO Create a common renderer for all types
+        # Set the output resolution and camera scale
+        bpy.context.scene.render.resolution_x = int(x_resolution)
+        bpy.context.scene.render.resolution_y = int(y_resolution)
+
+        # Set the camera position and scale
+        camera = bpy.data.objects["Camera"]
+        camera.location = tuple_convert(camera_position)
+        camera.data.ortho_scale = float(camera_scale)
+
+        # Render the scene
+        bpy.context.scene.render.filepath = str(Path(write_directory, f"{write_name}.png").absolute())
+        bpy.context.scene.eevee.use_gtao = True
+        bpy.context.scene.render.film_transparent = True
+        bpy.ops.render.render(write_still=True)
+
+        # Save the blend file for manual manipulation later
+        bpy.ops.wm.save_as_mainfile(filepath=f"{write_directory}/{write_name}.blend")
 
     def _set_dimensions(self):
 
@@ -114,8 +141,8 @@ class PrismaPlot:
 
         # Set the profile of the object via a bevel
         bpy.ops.object.modifier_add(type='BEVEL')
-        bpy.context.object.modifiers["Bevel"].segments = self.segments
-        bpy.context.object.modifiers["Bevel"].profile = self.profile
+        bpy.context.object.modifiers["Bevel"].segments = self.bevel_segments
+        bpy.context.object.modifiers["Bevel"].profile = self.bevel_profile
         box_obj.select_set(False)
 
     def _create_center_line(self):
@@ -174,4 +201,5 @@ class PrismaPlot:
             mesh.from_pydata(vert_list, [], [[0, 1, 2, 3]])
 
 
-PrismaPlot()
+if __name__ == '__main__':
+    PrismaPlot(sys.argv[len(sys.argv) - 1].split("__"))
