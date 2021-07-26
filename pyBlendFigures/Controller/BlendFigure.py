@@ -322,7 +322,10 @@ class BlendFigure:
     def map_frame_animation(self):
         raise NotImplementedError("Sorry, not yet implemented")
 
-    def prisma_plot(self, prisma_config_path):
+    # TODO docstrings
+    def prisma_plot(self, write_name, prisma_yaml, spacing=1, line_width=0.2, padding=0.4, bevel_segments=5,
+                    bevel_profile=0.5, text_colour="Black", box_colour="Black", x_resolution=1080, y_resolution=1920,
+                    camera_scale=55, camera_position=(5, -15, 18)):
 
         subprocess.Popen([self._blend_path, "-b", self._base_file, "--python",
                           str(Path(self._blend_scripts, "PrismaPlot.py")), self._prepare_args(locals())])
