@@ -2,7 +2,7 @@ from blendSupports.Supports.collection_cleanup import collection_cleanup
 from blendSupports.Meshs.mesh_ref import make_mesh
 from blendSupports.Meshs.text import make_text
 
-from miscSupports import load_yaml
+from miscSupports import load_yaml, chunk_list, flatten
 import bpy
 
 
@@ -24,10 +24,7 @@ class PrismaPlot:
         self.row_count = len(self.links["Rows"])
 
         self.widths, self.dimensions = self._set_dimensions()
-
-        self.box_locations = {}
-        self.box_names = {}
-        print(self.dimensions)
+        self.box_names = []
 
         previous_height = 0
         for row_i in range(self.row_count):
@@ -45,29 +42,10 @@ class PrismaPlot:
                 except KeyError:
                     pass
 
-        # todo Need to figure out how to do line spacing, this just doesn't work
-        # print("\n")
-        # column_keys = [key for key in self.box_locations if key.split("-")[0] == "0"]
-        #
-        # for i, key in enumerate(column_keys):
-        #     if i > 0:
-        #         print(key)
-        #         past = bpy.data.objects[self.box_names[f"{column_keys[i - 1]}_box"]]
-        #         past_vert = [(past.matrix_world @ v.co) for v in past.data.vertices]
-        #         top_y = min([y for x, y, z in past_vert])
-        #
-        #         pres = bpy.data.objects[self.box_names[f"{key}_box"]]
-        #         pres_vert = [(past.matrix_world @ v.co) for v in pres.data.vertices]
-        #         bot_y = max(y for x, y, z in pres_vert)
-        #         print(top_y, bot_y)
-        #
-        #         for a in past_vert:
-        #             print(a)
-        #
-        #         for b in pres_vert:
-        #             print(b)
-        #
-        #         break
+        # Create the center line
+        self._create_center_line()
+
+        join_lines = [box for box in self.box_names if box.split("-")[0] == "1"]
 
     def _set_dimensions(self):
 
@@ -118,7 +96,7 @@ class PrismaPlot:
                      ((x + x_d) + self.line_width, (y + y_d) + self.line_width, -0.1)]
         box_obj, mesh = make_mesh(f"{name}_box", self.box_colour)
         mesh.from_pydata(vert_list, [], [[0, 1, 2, 3]])
-        self.box_names[f"{name}_box"] = box_obj.name
+        self.box_names.append(box_obj.name)
 
         # Set the boxes origin to geometry
         box_obj.select_set(True)
@@ -137,8 +115,38 @@ class PrismaPlot:
         bpy.context.object.modifiers["Bevel"].profile = self.profile
         box_obj.select_set(False)
 
-        # Log the location for links
-        self.box_locations[name] = [vert_list]
+    def _create_center_line(self):
+
+        # Isolate the center boxes for the center line
+        center_line = [box for box in self.box_names if box.split("-")[0] == "0"]
+
+        # Select the center line objects and then duplicate and merge them to create the lines
+        for line in center_line:
+            obj = bpy.data.objects[line]
+            obj.select_set(True)
+
+        bpy.ops.object.duplicate_move(OBJECT_OT_duplicate={"linked": False, "mode": 'TRANSLATION'})
+        bpy.ops.object.join()
+
+        # Select the temp object, then chunk the y coords of the verts into 8s due to the inset face
+        temp_obj = bpy.context.selected_objects[0]
+        cords = chunk_list(sorted([v.co[1] for v in temp_obj.data.vertices]), 8)
+
+        # Create the vert list
+        vert_list = []
+        for i, v in enumerate(cords):
+            if i > 0:
+                vert_list.append([(0 - (self.line_width / 2), max(cords[i - 1]), -self.line_width),
+                              (0 - (self.line_width / 2), min(v), -self.line_width),
+                              (0 + (self.line_width / 2), min(v), -self.line_width),
+                              (0 + (self.line_width / 2), max(cords[i - 1]), -self.line_width)])
+
+        # Create the center line object, set the origin to the location of the temp object then delete it
+        face_list = chunk_list([i for i in range(len(vert_list) * 4)], len(vert_list))
+        box_obj, mesh = make_mesh("TestJoin", self.box_colour)
+        mesh.from_pydata(flatten(vert_list), [], face_list)
+        box_obj.location = temp_obj.location
+        bpy.ops.object.delete()
 
 
 PrismaPlot()
