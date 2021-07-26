@@ -4,9 +4,9 @@ import textwrap
 
 
 class Prisma:
-    def __init__(self, line_width=70):
+    def __init__(self, line_width=70, details_print=True):
         self.plot_dict = {}
-
+        self._details_print = details_print
         self.line_width = line_width
 
     def add_element(self, box_text, column, row):
@@ -33,6 +33,9 @@ class Prisma:
         # Create new lines at the end of each element, bar the last element, in the list then add this to the plot dict
         out_text = "".join([f"{text}\n" if i != len(text_list) - 1 else text for i, text in enumerate(text_list)])
         self.plot_dict[f"{column}-{row}"] = {"Text": out_text, "Col": column, "Row": row}
+
+        if self._details_print:
+            print(f"{out_text}\n{''.join(['-' for _ in range(self.line_width)])}")
 
     def prisma_links(self):
         """
