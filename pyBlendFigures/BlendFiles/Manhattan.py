@@ -4,15 +4,13 @@ from blendSupports.Renders.render import open_gl_render, render_scene
 from blendSupports.Meshs.graph_axis import make_graph_axis
 from blendSupports.Meshs.mesh_ref import make_mesh
 from blendSupports.Meshs.text import make_text
-from blendSupports.misc import tuple_convert
 
-from miscSupports import open_setter, decode_line, terminal_time, normalisation_min_max, FileOut
+from miscSupports import open_setter, decode_line, terminal_time, normalisation_min_max, FileOut, tuple_convert
 from pathlib import Path
 import json
 import math
-import ast
-import bpy
 import sys
+import bpy
 
 
 class Manhattan:
@@ -21,8 +19,11 @@ class Manhattan:
             base_position_header, p_value_header, camera_position, camera_scale, positions, x_axis_width, axis_colour,\
             line_density, axis_width, bound, significance, significance_colour, x_resolution, y_resolution = args
 
-        # Setup the blend file
-        self.configure_blend(tuple_convert(camera_position), float(camera_scale), int(x_resolution), int(y_resolution))
+        # Setup camera and write location
+        self.camera_position = camera_position
+        self.camera_scale = camera_scale
+        self.x_res = x_resolution
+        self.y_res = y_resolution
         self.write_directory = write_directory
 
         # Set the summary file, and determine if its zipped or not
@@ -55,31 +56,6 @@ class Manhattan:
         # Make the axis render
         self._make_axis(float(x_axis_width), tuple_convert(axis_colour), int(line_density), float(axis_width),
                         float(bound), float(significance), tuple_convert(significance_colour))
-
-    @staticmethod
-    def configure_blend(camera_position, camera_scale, x_resolution, y_resolution):
-        """Since we are using view port renders we need to disable must viewport features"""
-        bpy.context.scene.render.film_transparent = True
-        for area in bpy.context.screen.areas:
-
-            if area.type == "VIEW_3D":
-                for space in area.spaces:
-                    if space.type == "VIEW_3D":
-                        space.overlay.show_floor = False
-                        space.overlay.show_axis_x = False
-                        space.overlay.show_axis_y = False
-                        space.overlay.show_axis_z = False
-                        space.overlay.show_cursor = False
-                        space.overlay.show_object_origins = False
-
-        # Set the camera position
-        camera = bpy.data.objects["Camera"]
-        camera.location = camera_position
-        camera.data.ortho_scale = camera_scale
-
-        # Set the render details
-        bpy.context.scene.render.resolution_x = x_resolution
-        bpy.context.scene.render.resolution_y = y_resolution
 
     def set_summary_headers(self, chromosome_header, snp_header, base_position_header, p_value_header):
         """
