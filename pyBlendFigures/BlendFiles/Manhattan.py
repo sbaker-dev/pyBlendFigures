@@ -15,9 +15,9 @@ import bpy
 
 class Manhattan:
     def __init__(self, args):
-        write_directory, write_name, summary_path, chromosome_selection, chromosome_headers, snp_header, \
-            base_position_header, p_value_header, camera_position, camera_scale, x_axis_width, axis_colour,\
-            line_density, axis_width, bound, significance, significance_colour, x_resolution, y_resolution = args
+        write_directory, write_name, summary_path, chromosome_selection, chr_headers, snp_h, bp_h, p_v, \
+            camera_position, camera_scale, x_axis_width, axis_colour, line_density, axis_width, bound, significance, \
+            significance_colour, x_resolution, y_resolution = args
 
         # Setup camera and write location
         self.camera_position = camera_position
@@ -36,9 +36,7 @@ class Manhattan:
         self.logger.write(f"Starting {self.summary_file.stem}: {terminal_time()}\n")
 
         # Set the headers
-        self.chr_h, self.snp_h, self.bp_h, self.p_h = self.set_summary_headers(
-            chromosome_headers, snp_header, base_position_header, p_value_header)
-        self.header_indexes = [self.chr_h, self.snp_h, self.bp_h, self.p_h]
+        self.chr_h, self.snp_h, self.bp_h, self.p_h = self.set_summary_headers(chr_headers, snp_h, bp_h, p_v)
 
         # Evaluate the lists and, if it has been set, the positions within the file.
         chromosome_selection = json.loads(chromosome_selection)
@@ -95,6 +93,7 @@ class Manhattan:
         return header_indexes
 
     def _isolate_from_line(self, line_byte):
+        """Decode a line byte then isolate its attributes"""
         line = decode_line(line_byte, self.zipped)
         return [int(line[self.chr_h]), str(line[self.snp_h]), int(line[self.bp_h]), float(line[self.p_h])]
 
@@ -107,8 +106,6 @@ class Manhattan:
         """
 
         last_position = 0
-        self.logger.write(f"No positions found so creating them: {terminal_time()}")
-
         chromosome_positions = {1: 0}
         for chromosome in range(1, 23):
             print(chromosome)
@@ -174,17 +171,19 @@ class Manhattan:
 
     def isolate_line_array(self, chromosome):
         with open_setter(self.summary_file)(self.summary_file) as file:
-
             if self._seek_to_position(file, chromosome):
                 return self._make_line_array(file, chromosome)
             else:
                 return None
 
     def _seek_to_position(self, file, chromosome):
+
+        # Skip header
         if chromosome == 1:
             file.readline()
             return True
         else:
+            # Try to read the position unless the chromosome is not valid in which case return None
             try:
                 file.seek(self.positions[chromosome])
                 return True
