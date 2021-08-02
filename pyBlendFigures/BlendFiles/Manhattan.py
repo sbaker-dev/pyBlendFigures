@@ -94,6 +94,10 @@ class Manhattan:
                 raise KeyError(f"{header} was not found in {decoded_headers}")
         return header_indexes
 
+    def _isolate_from_line(self, line_byte):
+        line = decode_line(line_byte, self.zipped)
+        return [int(line[self.chr_h]), str(line[self.snp_h]), int(line[self.bp_h]), float(line[self.p_h])]
+
     def create_chromosome_positions(self):
         """
         If chromosome positions have not been set, find the seek positions of the file so we can jump to them when
@@ -112,9 +116,9 @@ class Manhattan:
                 self.seek_to_start(chromosome, file, last_position)
 
                 for line_byte in file:
-                    line = [v for i, v in enumerate(decode_line(line_byte, self.zipped)) if i in self.header_indexes]
+                    current_chrome, _, _, _ = self._isolate_from_line(line_byte)
 
-                    if int(line[self.chr_h]) > chromosome:
+                    if current_chrome > chromosome:
                         last_position = file.tell() - len(line_byte)
                         chromosome_positions[chromosome + 1] = last_position
                         self.logger.write(f"Determined log position of {chromosome}: {terminal_time()}")
@@ -147,19 +151,20 @@ class Manhattan:
             # Isolate the values from the file
             line_array = self.isolate_line_array(chromosome)
 
-            # Bound the base pair positions between 0 and 1
-            x_positions = normalisation_min_max([r[2] for r in line_array])
+            if line_array:
+                # Bound the base pair positions between 0 and 1
+                x_positions = normalisation_min_max([r[2] for r in line_array])
 
-            # Convert the p values to the -log base 10, append max to the axis so we can create it
-            y_positions = [-math.log(r[3]) for r in line_array]
-            self.axis_y_positions.append(max(y_positions))
+                # Convert the p values to the -log base 10, append max to the axis so we can create it
+                y_positions = [-math.log(r[3]) for r in line_array]
+                self.axis_y_positions.append(max(y_positions))
 
-            # Plot the vertexes to the graph
-            vertexes = [(x + (chromosome - 1), y, 0) for x, y in zip(x_positions, y_positions)]
+                # Plot the vertexes to the graph
+                vertexes = [(x + (chromosome - 1), y, 0) for x, y in zip(x_positions, y_positions)]
 
-            # Make the block
-            obj, mesh = make_mesh(f"Chromosome_{chromosome}")
-            mesh.from_pydata(vertexes, [], [])
+                # Make the block
+                obj, mesh = make_mesh(f"Chromosome_{chromosome}")
+                mesh.from_pydata(vertexes, [], [])
 
         # Render and then save the file encase we want to edit it
         open_gl_render(self.camera_position, self.write_directory, f"{self.write_name}__{index}", self.x_res,
@@ -168,23 +173,36 @@ class Manhattan:
         self.logger.write(f"Finished group {index} at {terminal_time()}")
 
     def isolate_line_array(self, chromosome):
-        line_array = []
-
         with open_setter(self.summary_file)(self.summary_file) as file:
 
-            if chromosome == 1:
-                file.readline()
+            if self._seek_to_position(file, chromosome):
+                return self._make_line_array(file, chromosome)
             else:
+                return None
+
+    def _seek_to_position(self, file, chromosome):
+        if chromosome == 1:
+            file.readline()
+            return True
+        else:
+            try:
                 file.seek(self.positions[chromosome])
+                return True
 
-            for line_byte in file:
-                line = [v for i, v in enumerate(decode_line(line_byte, self.zipped)) if i in self.header_indexes]
+            except KeyError:
+                return None
 
-                if int(line[self.chr_h]) > chromosome:
-                    file.close()
-                    return line_array
-                else:
-                    line_array.append([str(line[0]), int(line[1]), int(line[2]), float(line[3])])
+    def _make_line_array(self, file, chromosome):
+
+        line_array = []
+        for line_byte in file:
+            current_chrome, snp, bp, p = self._isolate_from_line(line_byte)
+
+            if current_chrome > chromosome:
+                file.close()
+                return line_array
+            else:
+                line_array.append([current_chrome, snp, bp, p])
         return line_array
 
     def _make_axis(self, x_axis_width, axis_colour, line_density, axis_width, bound, significance, significance_colour):
