@@ -1,5 +1,6 @@
-from blendSupports.Supports.collection_cleanup import collection_cleanup
 from blendSupports.Meshs.horizontal_dashed_line import make_horizontal_dashed_line
+from blendSupports.Supports.collection_cleanup import collection_cleanup
+from blendSupports.Renders.render import open_gl_render, render_scene
 from blendSupports.Meshs.graph_axis import make_graph_axis
 from blendSupports.Meshs.mesh_ref import make_mesh
 from blendSupports.Meshs.text import make_text
@@ -187,10 +188,8 @@ class Manhattan:
             mesh.from_pydata(vertexes, [], [])
 
         # Render and then save the file encase we want to edit it
-        bpy.context.scene.render.filepath = str(
-            Path(self.write_directory, f"{self.write_name}__{index}").absolute())
-        bpy.ops.wm.save_as_mainfile(filepath=f"{self.write_directory}/{self.write_name}__{index}.blend")
-        bpy.ops.render.opengl(write_still=True, view_context=True)
+        open_gl_render(self.camera_position, self.write_directory, f"{self.write_name}__{index}", self.x_res,
+                       self.y_res, camera_scale=self.camera_scale)
         collection_cleanup("Collection")
         self.logger.write(f"Finished group {index} at {terminal_time()}")
 
@@ -250,13 +249,8 @@ class Manhattan:
                 make_text(f"log{i}", axis_spacer, i, f"{i}", axis_width * 2, axis_colour, "CENTER")
 
         # Render the scene
-        bpy.context.scene.render.filepath = str(Path(self.write_directory, f"{self.write_name}__AXIS.png").absolute())
-        bpy.context.scene.eevee.use_gtao = True
-        bpy.context.scene.render.film_transparent = True
-        bpy.ops.render.render(write_still=True)
-
-        # Save the blend file for manual manipulation later
-        bpy.ops.wm.save_as_mainfile(filepath=f"{self.write_directory}/{self.write_name}__AXIS.blend")
+        render_scene(self.camera_position, self.write_directory, f"{self.write_name}__AXIS", x_resolution=self.x_res,
+                     y_resolution=self.y_res, camera_scale=self.camera_scale)
 
 
 if __name__ == '__main__':
