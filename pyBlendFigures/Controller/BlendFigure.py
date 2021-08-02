@@ -135,9 +135,9 @@ class BlendFigure:
 
     def manhattan_points(self, write_name, gwas_output_path, chromosome_groups, chromosome_headers="CHR",
                          snp_header="SNP", base_position_header="BP", p_value_header="P", camera_position=(12, 9, 55),
-                         camera_scale=40, chromosome_positions=None, x_axis_width=23.5, axis_colour="Dark_Grey",
-                         line_density=80, axis_width=0.2, bound=0.2, significance=8, significance_colour=(0, 0, 1, 1),
-                         x_resolution=1920, y_resolution=1080):
+                         camera_scale=40, x_axis_width=23.5, axis_colour="Dark_Grey", line_density=80, axis_width=0.2,
+                         bound=0.2, significance=8, significance_colour=(0, 0, 1, 1), x_resolution=1920,
+                         y_resolution=1080):
         """
         This will create the points for a manhattan plot
 
@@ -177,10 +177,6 @@ class BlendFigure:
 
         :param camera_position: Position of the camera, defaults to (12, 10, 55)
         :type camera_position: (int, int, int)
-
-        :param chromosome_positions: If you have prior knowledge of the poisitions of the chromosomes in the file in
-            terms of bytes, provide a dict of type {int(chromosome_number): byte start position}
-        :type chromosome_positions: dict
 
         :param x_axis_width: X axis cut off, defaults to 23.5 for 23 chromosomes + some overhang
         :type x_axis_width: float

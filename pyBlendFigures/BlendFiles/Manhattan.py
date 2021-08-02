@@ -16,7 +16,7 @@ import bpy
 class Manhattan:
     def __init__(self, args):
         write_directory, write_name, summary_path, chromosome_selection, chromosome_headers, snp_header, \
-            base_position_header, p_value_header, camera_position, camera_scale, positions, x_axis_width, axis_colour,\
+            base_position_header, p_value_header, camera_position, camera_scale, x_axis_width, axis_colour,\
             line_density, axis_width, bound, significance, significance_colour, x_resolution, y_resolution = args
 
         # Setup camera and write location
@@ -42,11 +42,9 @@ class Manhattan:
 
         # Evaluate the lists and, if it has been set, the positions within the file.
         chromosome_selection = json.loads(chromosome_selection)
-        if not ast.literal_eval(positions):
-            # If positions have not been set, set them
-            self.positions = self.create_chromosome_positions()
-        else:
-            self.positions = ast.literal_eval(positions)
+
+        # If positions have not been set, set them
+        self.positions = self.create_chromosome_positions()
 
         self.axis_y_positions = []
         # For each group, render the frames
