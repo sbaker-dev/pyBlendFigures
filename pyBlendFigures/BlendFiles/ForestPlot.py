@@ -1,23 +1,22 @@
 from blendSupports.Nodes.emission_node import create_emission_node
-from blendSupports.misc import tuple_convert, set_values
 from blendSupports.Meshs.mesh_ref import make_mesh
 from blendSupports.Meshs.text import make_text
+from blendSupports.Renders import render_scene
+from blendSupports.misc import set_values
 
-from miscSupports import normalisation_min_max, flatten, chunk_list
+from miscSupports import normalisation_min_max, flatten, chunk_list, tuple_convert
 from csvObject import CsvObject
-
-from pathlib import Path
 import statistics
 import logging
-import bpy
 import sys
+import bpy
 
 
 class ForestPlot:
     def __init__(self, args):
         write_directory, csv_path, image_name, height_iter, coefficient_radius, value_title, var_bound, ci_bound, \
-            rounder, text_colour, axis_width, axis_label, axis_colour, y_scale, x_resolution, y_resolution, \
-            image_type, camera_scale, camera_position = args
+            rounder, text_colour, axis_width, axis_label, axis_colour, y_scale, x_res, y_res, image_type, \
+            camera_scale, camera_position = args
 
         # Convert and create attributes for values where required
         self.csv_path = csv_path
@@ -44,23 +43,9 @@ class ForestPlot:
         # Create the axis and the labels for it
         self._create_axis()
 
-        # Set the output resolution and camera scale
-        bpy.context.scene.render.resolution_x = int(x_resolution)
-        bpy.context.scene.render.resolution_y = int(y_resolution)
-
-        # Set the camera position and scale
-        camera = bpy.data.objects["Camera"]
-        camera.location = tuple_convert(camera_position)
-        camera.data.ortho_scale = float(camera_scale)
-
         # Render the scene
-        bpy.context.scene.render.filepath = str(Path(write_directory, f"{image_name}.{image_type}").absolute())
-        bpy.context.scene.eevee.use_gtao = True
-        bpy.context.scene.render.film_transparent = True
-        bpy.ops.render.render(write_still=True)
-
-        # Save the blend file for manual manipulation later
-        bpy.ops.wm.save_as_mainfile(filepath=f"{write_directory}/{image_name}.blend")
+        render_scene(camera_position, write_directory, image_name, x_resolution=x_res, y_resolution=y_res,
+                     camera_scale=camera_scale)
 
     def _create_lines(self):
 
