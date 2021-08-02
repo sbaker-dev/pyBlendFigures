@@ -1,9 +1,8 @@
 from blendSupports.Supports.collection_cleanup import collection_cleanup
 from blendSupports.Meshs.mesh_ref import make_mesh
 from blendSupports.Meshs.text import make_text
-from blendSupports.misc import tuple_convert
 
-from miscSupports import load_yaml, chunk_list, flatten
+from miscSupports import load_yaml, chunk_list, flatten, tuple_convert
 from pathlib import Path
 import sys
 import bpy

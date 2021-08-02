@@ -1,9 +1,8 @@
 from blendSupports.Meshs.graph_axis import make_graph_axis
 from blendSupports.Meshs.mesh_ref import make_mesh
 from blendSupports.Meshs.text import make_text
-from blendSupports.misc import tuple_convert
 
-from miscSupports import open_setter, decode_line, terminal_time, FileOut
+from miscSupports import open_setter, decode_line, terminal_time, FileOut, tuple_convert
 from pathlib import Path
 import numpy as np
 import math
