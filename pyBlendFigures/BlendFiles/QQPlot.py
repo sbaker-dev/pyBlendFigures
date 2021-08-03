@@ -1,3 +1,4 @@
+from blendSupports.Renders.render import open_gl_render, render_scene
 from blendSupports.Meshs.graph_axis import make_graph_axis
 from blendSupports.Meshs.mesh_ref import make_mesh
 from blendSupports.Meshs.text import make_text
@@ -16,14 +17,19 @@ class QQPlot:
         write_directory, summary_file, p_value_index, write_name, log_transform, set_bounds, line_width, axis_colour, \
             camera_position, camera_scale, x_res, y_res = args
 
+        # Camera setup
+        self.camera_position = camera_position
+        self.camera_scale = camera_scale
+        self.x_res = x_res
+        self.y_res = y_res
+
         # Setup the file for the process
-        self.configure_blend(tuple_convert(camera_position), float(camera_scale), int(x_res), int(y_res))
         self.write_directory = write_directory
         self.summary_file = Path(summary_file)
         self.zipped = self.summary_file.suffix == ".gz"
-
-        # Set the write name of the output and the logger
         self.write_name = write_name
+
+        # Set the logger
         self.logger = FileOut(self.write_directory, f"{self.write_name}", "log", True)
         self.logger.write(f"Starting {self.summary_file.stem}: {terminal_time()}\n")
 
@@ -32,32 +38,6 @@ class QQPlot:
 
         # Draw the Axis
         self._axis(x_values, y_values, set_bounds, float(line_width), tuple_convert(axis_colour))
-
-    # todo Move the blendSupports, extract from both QQ and Manhattan
-    @staticmethod
-    def configure_blend(camera_position, camera_scale, x_resolution, y_resolution):
-        """Since we are using view port renders we need to disable must viewport features"""
-        bpy.context.scene.render.film_transparent = True
-        for area in bpy.context.screen.areas:
-
-            if area.type == "VIEW_3D":
-                for space in area.spaces:
-                    if space.type == "VIEW_3D":
-                        space.overlay.show_floor = False
-                        space.overlay.show_axis_x = False
-                        space.overlay.show_axis_y = False
-                        space.overlay.show_axis_z = False
-                        space.overlay.show_cursor = False
-                        space.overlay.show_object_origins = False
-
-        # Set the camera position
-        camera = bpy.data.objects["Camera"]
-        camera.location = camera_position
-        camera.data.ortho_scale = camera_scale
-
-        # Set the render details
-        bpy.context.scene.render.resolution_x = x_resolution
-        bpy.context.scene.render.resolution_y = y_resolution
 
     def _draw_qq(self, p_value_index, log_transform):
         # Extract the sorted -log10 values for the y values
@@ -74,9 +54,8 @@ class QQPlot:
         mesh.from_pydata(vertexes, [], [])
 
         # Render the QQ points
-        bpy.context.scene.render.filepath = str(Path(self.write_directory, f"{self.write_name}__POINTS").absolute())
-        bpy.ops.wm.save_as_mainfile(filepath=f"{self.write_directory}/{self.write_name}__POINTS.blend")
-        bpy.ops.render.opengl(write_still=True, view_context=True)
+        open_gl_render(self.camera_position, self.write_directory, f"{self.write_name}__POINTS", self.x_res, self.y_res,
+                       camera_scale=self.camera_scale)
         self.logger.write(f"Written QQ Points at {terminal_time()}")
 
         # Return the bounds for the axis
@@ -170,14 +149,8 @@ class QQPlot:
             make_text(f"log{i}", -0.5, i + 0.5, f"{i + 1}", 0.5, axis_colour, "CENTER")
 
         # Render the scene
-        # TODO: Make a general method to call from blend supports, do the same for OPENGL
-        bpy.context.scene.render.filepath = str(Path(self.write_directory, f"{self.write_name}__AXIS.png").absolute())
-        bpy.context.scene.eevee.use_gtao = True
-        bpy.context.scene.render.film_transparent = True
-        bpy.ops.render.render(write_still=True)
-
-        # Save the blend file for manual manipulation later
-        bpy.ops.wm.save_as_mainfile(filepath=f"{self.write_directory}/{self.write_name}__AXIS.blend")
+        render_scene(self.camera_position, self.write_directory, f"{self.write_name}__AXIS.png", "BLENDER_EEVEE",
+                     self.x_res, self.y_res, camera_scale=self.camera_scale)
         self.logger.write(f"Written the AXIS out at {terminal_time()}")
 
 
