@@ -44,7 +44,7 @@ class QQPlot:
         y_values = self._y_values_from_p(p_value_index, log_transform)
 
         # Create the x values as a vector between -log(1) and -log(1/N) for N values
-        x_values = sorted([-math.log(v) for v in np.linspace(1, 1 / len(y_values), len(y_values))])
+        x_values = sorted([-math.log10(v) for v in np.linspace(1, 1 / len(y_values), len(y_values))])
 
         # Create the vertexes from the x and y, hold z as 0
         vertexes = [(x, y, 0) for x, y in zip(x_values, y_values)]
@@ -91,7 +91,7 @@ class QQPlot:
 
                 # Log transform the p value if required
                 if log_transform:
-                    p_value = -math.log(p_value)
+                    p_value = -math.log10(p_value)
                 log_v.append(p_value)
 
         # Sort the values from smallest to largest

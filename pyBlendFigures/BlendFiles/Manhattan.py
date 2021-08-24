@@ -153,7 +153,7 @@ class Manhattan:
                 x_positions = normalisation_min_max([r[2] for r in line_array])
 
                 # Convert the p values to the -log base 10, append max to the axis so we can create it
-                y_positions = [-math.log(r[3]) for r in line_array]
+                y_positions = [-math.log10(r[3]) for r in line_array]
                 self.axis_y_positions.append(max(y_positions))
 
                 # Plot the vertexes to the graph
