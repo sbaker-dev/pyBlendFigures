@@ -7,7 +7,6 @@ from blendSupports.misc import set_values
 from miscSupports import normalisation_min_max, flatten, chunk_list, tuple_convert
 from csvObject import CsvObject
 import statistics
-import logging
 import sys
 import bpy
 
@@ -81,7 +80,6 @@ class ForestPlot:
         if csv_data.row_length != 4:
             msg = f"Csv file should contain phenotype, coefficient, lower bound, upper bound yet found" \
                   f" {csv_data.row_length} rows"
-            logging.error(msg)
             raise IndexError(msg)
 
         # Normalise the values for the table plot with 0 added so we know where to draw the axis
@@ -97,9 +95,6 @@ class ForestPlot:
         formatted_rows = []
         for row, normalised in zip(csv_data.row_data, normal_array):
             formatted_rows.append(flatten([[row[0]]] + [[row[i+1], normalised[i]] for i in range(3)]))
-
-        # Isolate the maximum phenotype name so we can justify our text accordingly
-        # name_length_max = max([len(row[0]) for row in csv_data])
         return formatted_rows, x_axis_point
 
     def _create_axis(self):

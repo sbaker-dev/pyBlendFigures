@@ -14,7 +14,7 @@ MAINTAINER = 'Samuel Baker'
 MAINTAINER_EMAIL = 'samuelbaker.researcher@gmail.com'
 LICENSE = 'MIT'
 DOWNLOAD_URL = "https://github.com/sbaker-dev/pyBlendFigures"
-VERSION = "0.05.1"
+VERSION = "0.05.2"
 PYTHON_REQUIRES = ">=3.7"
 
 INSTALL_REQUIRES = [
