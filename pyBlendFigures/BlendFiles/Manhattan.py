@@ -37,12 +37,10 @@ class Manhattan:
 
         # Set the headers
         self.chr_h, self.snp_h, self.bp_h, self.p_h = self.set_summary_headers(chr_headers, snp_h, bp_h, p_v)
+        self.logger.write(f"Set Headers {self.summary_file.stem}: {terminal_time()}\n")
 
         # Evaluate the lists and, if it has been set, the positions within the file.
         chromosome_selection = json.loads(chromosome_selection)
-
-        # If positions have not been set, set them
-        self.positions = self.create_chromosome_positions()
 
         self.axis_y_positions = []
         # For each group, render the frames
@@ -92,54 +90,6 @@ class Manhattan:
                 raise KeyError(f"{header} was not found in {decoded_headers}")
         return header_indexes
 
-    def _isolate_from_line(self, line_byte):
-        """Decode a line byte then isolate its attributes"""
-        line = decode_line(line_byte, self.zipped)
-        return [int(line[self.chr_h]), str(line[self.snp_h]), int(line[self.bp_h]), float(line[self.p_h])]
-
-    def create_chromosome_positions(self):
-        """
-        If chromosome positions have not been set, find the seek positions of the file so we can jump to them when
-        required
-        :return: dict of {chromosome: file.seek}
-        :rtype: dict
-        """
-
-        last_position = 0
-        chromosome_positions = {1: 0}
-        for chromosome in range(1, 23):
-            print(chromosome)
-            with open_setter(self.summary_file)(self.summary_file) as file:
-                self.seek_to_start(chromosome, file, last_position)
-
-                for line_byte in file:
-                    current_chrome, _, _, _ = self._isolate_from_line(line_byte)
-
-                    if current_chrome > chromosome:
-                        last_position = file.tell() - len(line_byte)
-                        chromosome_positions[chromosome + 1] = last_position
-                        self.logger.write(f"Determined log position of {chromosome}: {terminal_time()}")
-                        self.logger.write(chromosome_positions)
-                        break
-
-                file.close()
-
-        return chromosome_positions
-
-    @staticmethod
-    def seek_to_start(current_chromosome, file_obj, last_pos):
-        """
-        If its the first chromosome skip the first line, else seek to the start position of the next chromosome block
-        """
-
-        # Then just skip the header
-        if current_chromosome == 1:
-            file_obj.readline()
-
-        # Else skip to the start of the chromosome section
-        else:
-            file_obj.seek(last_pos)
-
     def make_manhattan(self, index, chromosome_group):
 
         for chromosome in chromosome_group:
@@ -147,6 +97,7 @@ class Manhattan:
 
             # Isolate the values from the file
             line_array = self.isolate_line_array(chromosome)
+            print(line_array[0])
 
             if line_array:
                 # Bound the base pair positions between 0 and 1
@@ -171,25 +122,8 @@ class Manhattan:
 
     def isolate_line_array(self, chromosome):
         with open_setter(self.summary_file)(self.summary_file) as file:
-            if self._seek_to_position(file, chromosome):
-                return self._make_line_array(file, chromosome)
-            else:
-                return None
-
-    def _seek_to_position(self, file, chromosome):
-
-        # Skip header
-        if chromosome == 1:
             file.readline()
-            return True
-        else:
-            # Try to read the position unless the chromosome is not valid in which case return None
-            try:
-                file.seek(self.positions[chromosome])
-                return True
-
-            except KeyError:
-                return None
+            return self._make_line_array(file, chromosome)
 
     def _make_line_array(self, file, chromosome):
 
@@ -200,9 +134,14 @@ class Manhattan:
             if current_chrome > chromosome:
                 file.close()
                 return line_array
-            else:
+            elif current_chrome == chromosome:
                 line_array.append([current_chrome, snp, bp, p])
         return line_array
+
+    def _isolate_from_line(self, line_byte):
+        """Decode a line byte then isolate its attributes"""
+        line = decode_line(line_byte, self.zipped)
+        return [int(line[self.chr_h]), str(line[self.snp_h]), int(line[self.bp_h]), float(line[self.p_h])]
 
     def _make_axis(self, x_axis_width, axis_colour, line_density, axis_width, bound, significance, significance_colour):
         # Set the axis y height as the max of axis_y_positions with ceiling to prevent out of bounds points
