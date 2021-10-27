@@ -21,10 +21,12 @@ class BlendFigure:
     def forest_plot(self, csv_path, image_name, height_iteration, coefficient_radius, value_title,
                     variable_bound=1.0, ci_bound=0.1, rounder=3, text_colour="Black", axis_width=0.005,
                     axis_label="X_Axis", axis_colour="Dark_Grey", y_scale=0.1, x_resolution=1080,
-                    y_resolution=1080, image_type="png", camera_scale=4, camera_position=(0, -1.5, 18)):
+                    y_resolution=1080, image_type="png", camera_scale=4, camera_position=(0, -1.5, 18),
+                    axis_position=0):
         """
         Will create a forest plot
 
+        :param axis_position:
         :param csv_path: Path to csv data containing four columns of phenotype, coefficient, lower bound, upper bound
         :type csv_path: str | Path
 

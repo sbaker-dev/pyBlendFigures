@@ -15,7 +15,7 @@ class ForestPlot:
     def __init__(self, args):
         write_directory, csv_path, image_name, height_iter, coefficient_radius, value_title, var_bound, ci_bound, \
             rounder, text_colour, axis_width, axis_label, axis_colour, y_scale, x_res, y_res, image_type, \
-            camera_scale, camera_position = args
+            camera_scale, camera_position, axis_position = args
 
         # Convert and create attributes for values where required
         self.csv_path = csv_path
@@ -30,6 +30,7 @@ class ForestPlot:
         self.axis_width = float(axis_width)
         self.axis_label = axis_label
         self.axis_colour = tuple_convert(axis_colour)
+        self.axis_target = float(axis_position)
 
         # Isolate the row data and create normalised position data so we can construct the elements
         self.line_rows, self.axis_position = self._position_values()
@@ -84,7 +85,7 @@ class ForestPlot:
 
         # Normalise the values for the table plot with 0 added so we know where to draw the axis
         numerical_values = flatten([row[1:] for row in csv_data.row_data])
-        normalised_value_list = normalisation_min_max(numerical_values + [0])
+        normalised_value_list = normalisation_min_max(numerical_values + [self.axis_target])
 
         # Isolate the axis and normal array, then chunk the normal array back into the coefficient, lower bound and
         # upper bound
@@ -111,10 +112,9 @@ class ForestPlot:
         make_text("Min_Bound", 0, self.height_max, set_values(min(self.bound_values), 2), self.height_iter,
                   self.text_colour)
         make_text("Max_Bound", 1, self.height_max, str(round(max(self.bound_values), 2)), self.height_iter,
-                  self.text_colour,
-                  "RIGHT")
-        make_text("Mid_Point", self.axis_position, self.height_max, str(0.0), self.height_iter, self.text_colour,
-                  "CENTER")
+                  self.text_colour, "RIGHT")
+        make_text("Mid_Point", self.axis_position, self.height_max, str(self.axis_target), self.height_iter,
+                  self.text_colour, "CENTER")
 
         # # Add the x axis label
         make_text("Axis Label", self.axis_position, self.height_max - self.height_iter, self.axis_label,
