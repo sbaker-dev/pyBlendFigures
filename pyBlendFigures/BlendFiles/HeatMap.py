@@ -71,7 +71,7 @@ class HeatMap:
             [self.make_row(ri, ci, elem) for ci, elem in enumerate(elements)]
 
             self.x_iterator = 0
-            self.y_iterator += self.iterator
+            self.y_iterator -= self.iterator
 
     def make_row(self, ri, ci, elem):
         # Make the background
