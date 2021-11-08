@@ -108,11 +108,11 @@ class HeatMap:
         for obj in bpy.data.collections['Collection'].objects:
             if 'Background' in obj.name:
                 obj.select_set(True)
+                bpy.context.view_layer.objects.active = obj
         bpy.ops.object.join()
 
         background = bpy.context.object
         background.name = 'Background'
-
 
 
 if __name__ == '__main__':
