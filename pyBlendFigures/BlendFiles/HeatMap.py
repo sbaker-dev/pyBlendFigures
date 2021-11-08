@@ -73,6 +73,8 @@ class HeatMap:
             self.x_iterator = 0
             self.y_iterator -= self.iterator
 
+        self.join_borders()
+
     def make_row(self, ri, ci, elem):
         # Make the background
         bg = self.make_square(f'Background_{ri}_{ci}', self.background_colour)
