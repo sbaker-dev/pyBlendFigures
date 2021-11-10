@@ -1,9 +1,11 @@
 from blendSupports.Nodes.emission_node import create_emission_node
+from blendSupports.Supports.collection_cleanup import collection_cleanup
 import bpy
 
-from miscSupports import chunk_list
+from miscSupports import chunk_list, directory_iterator
 from csvObject import CsvObject
 from dataclasses import dataclass
+from pathlib import Path
 
 
 # Csv contains Coefficient-Scale
@@ -118,6 +120,19 @@ class HeatMap:
 
 
 if __name__ == '__main__':
-    root = r"C:\Users\Samuel\PycharmProjects\AsthmaDisease\Figures\LogitForest\HeatMap\Actual\MS_Age1.csv"
+    root = r"C:\Users\Samuel\PycharmProjects\AsthmaDisease\Figures\LogitForest\HeatMap\Actual"
+    out = r"C:\Users\Samuel\PycharmProjects\AsthmaDisease\Figures\LogitForest\HeatMap\Blend"
 
-    HeatMap(root)
+    HeatMap(r"C:\Users\Samuel\PycharmProjects\AsthmaDisease\Figures\LogitForest\HeatMap\Actual\SF_Age3.csv")
+
+#
+#    for file in directory_iterator(root):
+#        print(file)
+#        HeatMap(Path(root, file))
+#
+#        # Save the blend file for manual manipulation later
+#        bpy.ops.wm.save_as_mainfile(filepath=f"{out}/{Path(root, file).stem}.blend")
+#
+#        collection_cleanup('Collection')
+
+
