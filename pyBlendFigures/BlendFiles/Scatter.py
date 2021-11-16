@@ -17,43 +17,42 @@ class Scatter:
         self.name_index = 0
         self.x_index = 1
         self.y_index = 2
-        self.ico_scale = 0.05
+        self.ico_scale = 0.5
 
-        for group, points in self.scatter_groups.items():
-            vertexes = [(p[self.x_index], p[self.y_index], 0) for p in points]
+        self._make_point_groups()
 
-            obj, mesh = make_mesh(group)
-            mesh.from_pydata(vertexes, [], [])
+    def _make_point_groups(self):
+        [self.make_group(group, points) for group, points in self.scatter_groups.items()]
 
-            print(vertexes)
+    def make_group(self, group, points):
+        obj, x_mid, y_max = self.make_vertex_holder(group, points)
 
-            bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=1, radius=1, enter_editmode=False, align='WORLD',
-                                                  location=(0, 0, 0))
-            ico = bpy.context.view_layer.objects.active
-            ico.scale = (self.ico_scale, self.ico_scale, self.ico_scale)
+        if (x_mid != 0) and (y_max != 0):
+            make_text(group, x_mid, -6, group, 5, (0.25, 0.25, 0.25, 1), 'CENTER')
 
-            ico.parent = obj
-            obj.instance_type = 'VERTS'
-            bpy.ops.object.select_all(action='DESELECT')
+        self.link_ico(obj)
 
-        # file_path = r"C:\Users\Samuel\PycharmProjects\DeprivationIndex\Code\PheWAS\PheWAS_Results\Python\TS_DS.csv"
-        #
-        # y_axis_index = 6
-        # x_axis_index = 12
-        #
-        # # Create the coordinates
-        # file = CsvObject(file_path, set_columns=True)
-        # coordinates = [(float(x), float(y), 0) for x, y in zip(file[x_axis_index], file[y_axis_index])]
-        #
-        # # Make the points data
-        # obj, mesh = make_mesh(f"QQ")
-        # mesh.from_pydata(coordinates, [], [])
-        #
-        # # # Render the QQ points
-        # # bpy.context.scene.render.filepath = str(Path(self.write_directory, f"{self.write_name}__POINTS").absolute())
-        # # bpy.ops.wm.save_as_mainfile(filepath=f"{self.write_directory}/{self.write_name}__POINTS.blend")
-        # # bpy.ops.render.opengl(write_still=True, view_context=True)
-        # # self.logger.write(f"Written QQ Points at {terminal_time()}")
+    def make_vertex_holder(self, group, points):
+        vertexes = [(p[self.x_index], p[self.y_index], 0) for p in points]
+
+        x_points = [p[self.x_index] for p in points]
+
+        obj, mesh = make_mesh(group)
+        mesh.from_pydata(vertexes, [], [])
+
+        if len(vertexes) > 0:
+            return obj, (min(x_points) + max(x_points)) / 2, max([p[self.y_index] for p in points])
+        else:
+            return obj, 0, 0
+
+    def link_ico(self, obj):
+        bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=1, radius=1, enter_editmode=False, align='WORLD',
+                                              location=(0, 0, 0))
+        ico = bpy.context.view_layer.objects.active
+        ico.scale = (self.ico_scale, self.ico_scale, self.ico_scale)
+        ico.parent = obj
+        obj.instance_type = 'VERTS'
+        bpy.ops.object.select_all(action='DESELECT')
 
 
 if __name__ == '__main__':
