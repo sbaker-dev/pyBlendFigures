@@ -19,9 +19,9 @@ for frame_id, frame_place_values in frame_dict.items():
         obj.select_set(True)
 
         # Isolate the first material emission node, change its colour to the colour required
-        mat = obj.data.materials[0]
-        emission = mat.node_tree.nodes.get('Emission')
-        emission.inputs[0].default_value = colour
+        for mat in obj.data.materials:
+            emission = mat.node_tree.nodes.get('Emission')
+            emission.inputs[0].default_value = colour
 
     bpy.context.scene.render.filepath = str(Path(write_directory, f"{frame_id}.png").absolute())
     bpy.ops.render.render(write_still=True)
