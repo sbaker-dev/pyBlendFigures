@@ -48,21 +48,17 @@ class Scatter:
         mesh.from_pydata(vertexes, [], [])
 
         if len(vertexes) > 0:
-
             y_points = [p[self.y_index] for p in points]
             self._y_max.append(max(y_points))
-
-            for i, y in enumerate(y_points):
-                if y > self.label_threshold:
-                    name = points[i][self.name_index]
-                    make_text(name, x_points[i] + (2 * self.ico_scale), y, name, self._label_scale,
-                              self._text_colour)
-
-
+            [self.label_points(points, x_points, i, y) for i, y in enumerate(y_points) if y > self.label_threshold]
             return obj, (min(x_points) + max(x_points)) / 2,
         else:
             self._y_max.append(0)
             return obj, 0
+
+    def label_points(self, points, x_points, i, y):
+        name = points[i][self.name_index]
+        make_text(name, x_points[i] + (2 * self.ico_scale), y, name, self._label_scale, self._text_colour)
 
     def link_ico(self, obj):
         bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=1, radius=1, enter_editmode=False, align='WORLD',
