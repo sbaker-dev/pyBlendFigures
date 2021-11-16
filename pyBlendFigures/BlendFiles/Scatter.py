@@ -14,26 +14,28 @@ class Scatter:
     def __init__(self):
         self.scatter_groups = load_json(r"C:\Users\Samuel\PycharmProjects\pyBlendFigures\TestV2\Scatter\Test\Test.txt")
 
-        self.label_threshold = 10
+        self.label_threshold = 15
         self.name_index = 0
         self.x_index = 1
         self.y_index = 2
         self.ico_scale = 0.5
+        self._text_scale = 5
+        self._label_scale = 3
+        self._text_colour = (0.25, 0.25, 0.25, 1)
 
         self._y_max = []
-
         self._make_point_groups()
-
-        print(math.ceil(max(self._y_max)))
+        self.make_y_axis()
 
     def _make_point_groups(self):
         [self.make_group(group, points) for group, points in self.scatter_groups.items()]
 
     def make_group(self, group, points):
+        print(group)
         obj, x_mid = self.make_vertex_holder(group, points)
 
         if x_mid != 0:
-            make_text(group, x_mid, -6, group, 5, (0.25, 0.25, 0.25, 1), 'CENTER')
+            make_text(group, x_mid, -(self._text_scale + 1), group, self._text_scale, self._text_colour, 'CENTER')
 
         self.link_ico(obj)
 
@@ -46,7 +48,17 @@ class Scatter:
         mesh.from_pydata(vertexes, [], [])
 
         if len(vertexes) > 0:
-            self._y_max.append(max([p[self.y_index] for p in points]))
+
+            y_points = [p[self.y_index] for p in points]
+            self._y_max.append(max(y_points))
+
+            for i, y in enumerate(y_points):
+                if y > self.label_threshold:
+                    name = points[i][self.name_index]
+                    make_text(name, x_points[i] + (2 * self.ico_scale), y, name, self._label_scale,
+                              self._text_colour)
+
+
             return obj, (min(x_points) + max(x_points)) / 2,
         else:
             self._y_max.append(0)
@@ -60,6 +72,13 @@ class Scatter:
         ico.parent = obj
         obj.instance_type = 'VERTS'
         bpy.ops.object.select_all(action='DESELECT')
+
+    def make_y_axis(self):
+        iterator = math.ceil(max(self._y_max)) / 10
+        for i in range(1, 11):
+            make_text(str(iterator * i), -(self._text_scale + 1), iterator * i, str(round(iterator * i, 2)),
+                      self._text_scale, self._text_colour, 'RIGHT')
+
 
 
 if __name__ == '__main__':
