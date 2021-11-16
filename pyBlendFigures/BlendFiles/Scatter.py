@@ -1,27 +1,26 @@
-# from blendSupports.Meshs.graph_axis import make_graph_axis
 from blendSupports.Meshs.mesh_ref import make_mesh
 from blendSupports.Meshs.text import make_text
-# from blendSupports.misc import tuple_convert
 
-from miscSupports import load_json
-from csvObject import CsvObject
+from miscSupports import load_json, tuple_convert
 import math
-import sys
 import bpy
 
 
 class Scatter:
-    def __init__(self):
-        self.scatter_groups = load_json(r"C:\Users\Samuel\PycharmProjects\pyBlendFigures\TestV2\Scatter\Test\Test.txt")
+    def __init__(self, args):
 
-        self.label_threshold = 15
-        self.name_index = 0
-        self.x_index = 1
-        self.y_index = 2
-        self.ico_scale = 0.5
-        self._text_scale = 5
-        self._label_scale = 3
-        self._text_colour = (0.25, 0.25, 0.25, 1)
+        load_path, label_threshold, name_index, x_index, y_index, ico_scale, text_scale, label_scale, text_colour = args
+
+        self.scatter_groups = load_json(load_path)
+
+        self.label_threshold = float(label_threshold)
+        self.name_index = int(name_index)
+        self.x_index = int(x_index)
+        self.y_index = int(y_index)
+        self.ico_scale = (float(ico_scale))
+        self._text_scale = float(text_scale)
+        self._label_scale = float(label_scale)
+        self._text_colour = tuple_convert(text_colour)
 
         self._y_max = []
         self._make_point_groups()
@@ -76,6 +75,8 @@ class Scatter:
                       self._text_scale, self._text_colour, 'RIGHT')
 
 
-
 if __name__ == '__main__':
-    Scatter()
+
+    arg_list = [r"C:\Users\Samuel\PycharmProjects\pyBlendFigures\TestV2\Scatter\Test\Test.txt",
+                15, 0, 1, 2, 0.5, 5, 3, (0.25, 0.25, 0.25, 1)]
+    Scatter(arg_list)
