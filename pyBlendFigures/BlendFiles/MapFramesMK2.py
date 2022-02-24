@@ -29,6 +29,9 @@ def _create_colour_dict(frame_dict, attr, date, colours):
 
     # Isolate the quantiles for each location
     v_list = [v for v in value_dict.values() if v != 'NA']
+    if len(v_list) == 0:
+        return None, None
+
     quantiles = [0] + [np.quantile(v_list, i / 10) for i in range(1, 10)] + [max(v_list)]
 
     # Isolate colours based on quantiles of NA
@@ -92,21 +95,22 @@ def main():
         for d in dates:
 
             colour_dict, q_values = _create_colour_dict(frame_dict, attr, d, colours)
-            bpy.ops.object.select_all(action='DESELECT')
+            if colour_dict:
+                bpy.ops.object.select_all(action='DESELECT')
 
-            for i, text in enumerate(q_values, 1):
-                _change_element_colour(f"Q{i}", colours[i - 1])
-                _change_element_colour(f"Q{i}T", colours[i - 1])
-                _change_text(f"Q{i}T", text)
+                for i, text in enumerate(q_values, 1):
+                    _change_element_colour(f"Q{i}", colours[i - 1])
+                    _change_element_colour(f"Q{i}T", colours[i - 1])
+                    _change_text(f"Q{i}T", text)
 
-            bpy.ops.object.select_all(action='DESELECT')
-            for place, colour in colour_dict.items():
-                place_dict[place].inputs[0].default_value = colour
+                bpy.ops.object.select_all(action='DESELECT')
+                for place, colour in colour_dict.items():
+                    place_dict[place].inputs[0].default_value = colour
 
-            bpy.context.scene.render.filepath = str(Path(write_directory, attr, f"{d}.png").absolute())
-            bpy.context.scene.eevee.use_gtao = True
-            bpy.context.scene.render.film_transparent = True
-            bpy.ops.render.render(write_still=True)
+                bpy.context.scene.render.filepath = str(Path(write_directory, attr, f"{d}.png").absolute())
+                bpy.context.scene.eevee.use_gtao = True
+                bpy.context.scene.render.film_transparent = True
+                bpy.ops.render.render(write_still=True)
 
 
 if __name__ == '__main__':
